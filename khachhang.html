@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer CRM - Quản Lý Khách Hàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
+    .modal-open { opacity: 1; transform: scale(1); pointer-events: auto; }
+    .modal-hide { opacity: 0; transform: scale(0.95); pointer-events: none; }
+    /* Animation cho badge tiền */
+    .money-badge { transition: all 0.3s; }
+    .money-badge:hover { transform: scale(1.05); }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-sm font-sans text-slate-800">
+
+<div class="p-4 max-w-[1400px] mx-auto">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+    <div>
+      <h1 class="text-2xl font-bold text-blue-700 flex items-center gap-2">
+          <i class="fa-solid fa-users-gear"></i> Customer CRM
+      </h1>
+      <p class="text-slate-500 text-xs mt-1">Hệ thống quản lý thông tin & lịch sử mua hàng</p>
+    </div>
+    <div class="text-right">
+      <div id="totalCount" class="text-3xl font-bold text-slate-800">0</div>
+      <div class="text-xs text-slate-500">Khách hàng</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="flex flex-col md:flex-row gap-3 mb-4">
+    <div class="relative flex-1">
+        <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400"></i>
+        <input id="searchInput" type="text" placeholder="Tìm tên, SĐT, CCCD..."
+        class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
+    </div>
+    <button onclick="loadData()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition font-medium">
+        <i class="fa-solid fa-rotate-right"></i> Tải lại
+    </button>
+    <button onclick="openModal('add')" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-bold flex items-center gap-2">
+        <i class="fa-solid fa-user-plus"></i> Thêm Khách
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="overflow-x-auto bg-white rounded-xl shadow border border-slate-200 min-h-[400px]">
+    <div id="loading" class="hidden absolute inset-0 bg-white/80 z-50 flex flex-col items-center justify-center">
+        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600 mb-2"></i>
+        <span class="text-slate-500 font-medium">Đang đồng bộ dữ liệu...</span>
+    </div>
+
+    <table class="min-w-full text-left border-collapse">
+      <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase text-xs tracking-wider sticky top-0 z-10">
+        <tr>
+          <th class="p-4 font-semibold w-12 text-center">#</th>
+          <th class="p-4 font-semibold w-32">SĐT</th>
+          <th class="p-4 font-semibold w-48">HỌ TÊN</th>
+          <th class="p-4 font-semibold">ĐỊA CHỈ</th>
+          <th class="p-4 font-semibold w-32 text-right">TỔNG MUA</th> <!-- Cột Mới -->
+          <th class="p-4 font-semibold w-32">CCCD</th>
+          <th class="p-4 font-semibold w-24">SOCIAL</th>
+          <th class="p-4 font-semibold w-24 text-center">HÀNH ĐỘNG</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
+        <!-- Rows rendered here -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Form -->
+<div id="modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm">
+  <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden transform transition-all duration-200 scale-95" id="modalContent">
+    <div class="bg-blue-600 p-4 flex justify-between items-center text-white">
+        <h2 id="modalTitle" class="text-lg font-bold"><i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng</h2>
+        <button onclick="closeModal()" class="hover:text-red-200 text-xl font-bold w-8 h-8 rounded-full hover:bg-blue-700 transition flex items-center justify-center">&times;</button>
+    </div>
+    
+    <div class="p-6 space-y-4">
+        <input type="hidden" id="sdt_key">
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-1">
+                <label class="block text-xs font-bold text-slate-600 mb-1">SỐ ĐIỆN THOẠI <span class="text-red-500">*</span></label>
+                <input type="text" id="inp_sdt" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-blue-700 font-bold" placeholder="09xxxxxxx">
+            </div>
+            <div class="col-span-1">
+                <label class="block text-xs font-bold text-slate-600 mb-1">HỌ VÀ TÊN <span class="text-red-500">*</span></label>
+                <input type="text" id="inp_ten" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none capitalize" placeholder="Nguyễn Văn A">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">ĐỊA CHỈ</label>
+            <input type="text" id="inp_diachi" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Số nhà, đường, quận/huyện...">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">CCCD / CMND</label>
+                <input type="text" id="inp_cccd" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono" placeholder="12 số">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">SOCIAL (Link)</label>
+                <input type="text" id="inp_social" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-blue-600" placeholder="Facebook/Zalo">
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4 bg-slate-50 flex justify-end gap-3 border-t">
+        <button onclick="closeModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition">Hủy</button>
+        <button id="btnSave" onclick="saveCustomer()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg font-bold flex items-center gap-2 transition transform active:scale-95">
+            <i class="fa-solid fa-save"></i> Lưu Hồ Sơ
+        </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================= CONFIG =================
+// Thay link Web App của CustomerCode.gs vào đây
+const API_URL = 'https://script.google.com/macros/s/AKfycbxaQRGkc1Fe1Dn_RZynt5zF0S03pTdHs2pr-EvvQdrvRApQtFZ-MA0HIIJ07zC_oI8_DQ/exec'; 
+// ==========================================
+
+let allData = [];
+let isEditing = false;
+
+const qs = (s) => document.querySelector(s);
+const getVal = (id) => document.getElementById(id).value;
+const setVal = (id, val) => document.getElementById(id).value = val;
+const formatMoney = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+
+// --- API FETCH HELPER ---
+async function fetchData(bodyData = null) {
+    if(API_URL.includes('YOUR_CUSTOMER')) { alert("Chưa cấu hình API URL!"); return null; }
+    try {
+        const options = {
+            method: bodyData ? 'POST' : 'GET',
+            mode: 'cors',
+            headers: bodyData ? { "Content-Type": "text/plain;charset=utf-8" } : undefined,
+            body: bodyData ? JSON.stringify(bodyData) : undefined
+        };
+        
+        if(bodyData) {
+             const fallbackOptions = { ...options, mode: 'no-cors' };
+             const p1 = fetch(API_URL, options);
+             const p2 = new Promise(r => setTimeout(() => r('timeout'), 5000));
+             try {
+                 const res = await p1;
+                 if(!res.ok) throw new Error(res.status);
+                 return await res.json();
+             } catch(e) {
+                 await fetch(API_URL, fallbackOptions);
+                 return { success: true, message: "Đã gửi dữ liệu (Fallback)" };
+             }
+        } else {
+            const res = await fetch(API_URL);
+            return await res.json();
+        }
+    } catch (e) {
+        console.error(e);
+        if(!bodyData) alert("Lỗi tải dữ liệu: " + e.message);
+        return null;
+    }
+}
+
+// --- MAIN LOGIC ---
+async function loadData() {
+    qs('#loading').classList.remove('hidden');
+    const data = await fetchData();
+    if(data) {
+        // Sắp xếp khách hàng mua nhiều lên đầu
+        allData = data.sort((a, b) => b.TONGTIEN - a.TONGTIEN);
+        renderTable(allData);
+        qs('#totalCount').innerText = allData.length;
+    }
+    qs('#loading').classList.add('hidden');
+}
+
+function renderTable(data) {
+    const tbody = qs('#tableBody');
+    tbody.innerHTML = '';
+    
+    if(data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">Chưa có dữ liệu</td></tr>`;
+        return;
+    }
+
+    data.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-blue-50 border-b border-slate-100 transition-colors group";
+        
+        // Link Social
+        let socialDisplay = '-';
+        if(row.SOCIAL) {
+            socialDisplay = `<a href="${row.SOCIAL.startsWith('http') ? row.SOCIAL : '#'}" target="_blank" class="text-blue-500 hover:text-blue-700 hover:underline flex items-center gap-1 justify-center w-8 h-8 bg-blue-50 rounded-full"><i class="fa-solid fa-link"></i></a>`;
+        }
+
+        // Style cho Tổng tiền
+        let moneyClass = 'text-slate-500 font-medium'; // Mặc định
+        if (row.TONGTIEN > 100000000) moneyClass = 'text-purple-600 font-bold bg-purple-50 px-2 py-1 rounded-lg money-badge inline-block'; // VIP > 100tr
+        else if (row.TONGTIEN > 20000000) moneyClass = 'text-green-600 font-bold'; // > 20tr
+
+        tr.innerHTML = `
+            <td class="p-4 text-center text-slate-400 text-xs">${i + 1}</td>
+            <td class="p-4 font-mono font-bold text-slate-700 select-all">${row.SDT}</td>
+            <td class="p-4 font-semibold text-blue-900">${row.TEN}</td>
+            <td class="p-4 text-slate-600 truncate max-w-[200px]" title="${row.DIACHI}">${row.DIACHI || '-'}</td>
+            
+            <!-- CỘT TỔNG TIỀN MỚI -->
+            <td class="p-4 text-right">
+                <span class="${moneyClass}">${row.TONGTIEN > 0 ? formatMoney(row.TONGTIEN) : '-'}</span>
+            </td>
+            
+            <td class="p-4 font-mono text-slate-500">${row.CCCD || '-'}</td>
+            <td class="p-4 text-center">${socialDisplay}</td>
+            <td class="p-4 text-center relative">
+  <button onclick="openActionMenu('${row.SDT}', '${row.TEN.replace(/'/g,'')}')"
+    class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition">
+    <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
+  </button>
+</td>
+
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// --- ADD / EDIT ---
+function openModal(mode) {
+    const m = qs('#modal'); m.classList.remove('modal-hide'); m.classList.add('modal-open');
+    const mc = qs('#modalContent'); mc.classList.remove('scale-95'); mc.classList.add('scale-100');
+
+    if(mode === 'add') {
+        isEditing = false;
+        qs('#modalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng';
+        setVal('sdt_key', '');
+        setVal('inp_sdt', ''); setVal('inp_ten', ''); setVal('inp_diachi', '');
+        setVal('inp_cccd', ''); setVal('inp_social', '');
+    }
+}
+
+function openEdit(sdt) {
+    const item = allData.find(r => r.SDT == sdt);
+    if(!item) return;
+    
+    openModal();
+    isEditing = true;
+    qs('#modalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Sửa Thông Tin';
+    
+    setVal('sdt_key', item.SDT);
+    setVal('inp_sdt', item.SDT.replace(/'/g, '')); // Bỏ dấu ' khi hiển thị
+    setVal('inp_ten', item.TEN);
+    setVal('inp_diachi', item.DIACHI);
+    setVal('inp_cccd', item.CCCD ? item.CCCD.replace(/'/g, '') : '');
+    setVal('inp_social', item.SOCIAL);
+}
+
+function closeModal() {
+    const m = qs('#modal'); m.classList.remove('modal-open'); m.classList.add('modal-hide');
+    const mc = qs('#modalContent'); mc.classList.remove('scale-100'); mc.classList.add('scale-95');
+}
+
+async function saveCustomer() {
+    const rawSdt = getVal('inp_sdt').trim();
+    const ten = getVal('inp_ten').trim();
+    const rawCccd = getVal('inp_cccd').trim();
+    
+    if(!rawSdt || !ten) return alert("Vui lòng nhập SĐT và Tên!");
+
+    // Auto thêm dấu ' vào sdt/cccd để giữ số 0
+    const sdtForSheet = rawSdt.startsWith("'") ? rawSdt : "'" + rawSdt;
+    let cccdForSheet = rawCccd;
+    if (rawCccd && !rawCccd.startsWith("'")) cccdForSheet = "'" + rawCccd;
+
+    const item = {
+        SDT: sdtForSheet, // Lưu có dấu '
+        TEN: ten,
+        DIACHI: getVal('inp_diachi'),
+        CCCD: cccdForSheet,
+        SOCIAL: getVal('inp_social'),
+        TONGTIEN: 0 // Mới tạo chưa có tiền
+    };
+
+    const action = isEditing ? 'edit' : 'add';
+    const body = { action, ...item };
+    if(isEditing) {
+        body.SDT_KEY = getVal('sdt_key');
+        // Giữ lại tổng tiền cũ nếu đang sửa
+        const oldItem = allData.find(r => r.SDT == body.SDT_KEY);
+        if(oldItem) item.TONGTIEN = oldItem.TONGTIEN;
+    }
+
+    // Optimistic Update
+    const oldData = [...allData];
+    if(isEditing) {
+        const idx = allData.findIndex(r => r.SDT == body.SDT_KEY);
+        if(idx !== -1) allData[idx] = item;
+    } else {
+        allData.unshift(item); // Thêm lên đầu
+    }
+    renderTable(allData);
+    qs('#totalCount').innerText = allData.length;
+    closeModal();
+
+    const res = await fetchData(body);
+    if(res && !res.success) {
+        alert("Lỗi: " + res.message);
+        allData = oldData; renderTable(allData);
+    }
+}
+
+async function delCustomer(sdt) {
+    if(!confirm("Xóa khách hàng: " + sdt + "?")) return;
+    const oldData = [...allData];
+    allData = allData.filter(r => r.SDT != sdt);
+    renderTable(allData);
+    qs('#totalCount').innerText = allData.length;
+
+    const res = await fetchData({ action: 'delete', SDT: sdt });
+    if(res && !res.success) {
+        alert("Xóa thất bại: " + res.message);
+        allData = oldData; renderTable(allData);
+    }
+}
+
+qs('#searchInput').addEventListener('input', (e) => {
+    const k = e.target.value.toLowerCase();
+    const f = allData.filter(r => 
+        r.SDT.toLowerCase().includes(k) || 
+        r.TEN.toLowerCase().includes(k) ||
+        (r.CCCD && r.CCCD.toLowerCase().includes(k))
+    );
+    renderTable(f);
+});
+
+loadData();
+let currentSDT = '';
+
+function openActionMenu(sdt, name) {
+  currentSDT = sdt;
+  qs('#as_name').innerText = name;
+  qs('#as_sdt').innerText = sdt.replace(/'/g, '');
+
+  const sheet = qs('#actionSheet');
+  sheet.classList.remove('hidden');
+
+  setTimeout(() => {
+    sheet.children[0].classList.remove('translate-y-full');
+  }, 10);
+
+  sheet.onclick = (e) => {
+    if (e.target === sheet) closeActionMenu();
+  };
+}
+
+function closeActionMenu() {
+  const sheet = qs('#actionSheet');
+  sheet.children[0].classList.add('translate-y-full');
+  setTimeout(() => sheet.classList.add('hidden'), 200);
+}
+
+function triggerAction(action) {
+  closeActionMenu();
+
+  if (action === 'edit') openEdit(currentSDT);
+  if (action === 'delete') delCustomer(currentSDT);
+}
+
+</script>
+<!-- ACTION MENU -->
+<div id="actionSheet" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end justify-center">
+  <div class="bg-white w-full max-w-md rounded-t-2xl shadow-2xl p-4 translate-y-full transition-transform duration-300">
+    
+    <div class="text-center mb-3">
+      <div id="as_name" class="font-bold text-slate-800"></div>
+      <div id="as_sdt" class="text-xs text-slate-500"></div>
+    </div>
+
+    <div class="space-y-2">
+      <button onclick="triggerAction('edit')"
+        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 transition">
+        <i class="fa-solid fa-pen text-blue-600"></i> Sửa thông tin
+      </button>
+
+      <button onclick="triggerAction('delete')"
+        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition">
+        <i class="fa-solid fa-trash"></i> Xóa khách hàng
+      </button>
+    </div>
+
+    <button onclick="closeActionMenu()"
+      class="mt-4 w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-medium">
+      Đóng
+    </button>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - POLY STORE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; transition: transform 0.2s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="text-slate-800">
+
+  <div class="max-w-[1600px] mx-auto p-4 md:p-6 space-y-6">
+    
+    <!-- HEADER & FILTERS -->
+    <div class="flex flex-col lg:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-chart-simple text-indigo-600"></i> Báo Cáo Kinh Doanh
+        </h1>
+        <p class="text-slate-500 text-xs mt-1">Tổng hợp Doanh số Cá nhân</p>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+          <select id="timeRange" onchange="changeTimeRange()" class="bg-white border border-gray-300 text-sm rounded px-3 py-2 outline-none focus:border-blue-500 font-medium text-slate-700 cursor-pointer">
+              <option value="this_month" selected>Tháng này</option>
+              <option value="today">Hôm nay</option>
+              <option value="yesterday">Hôm qua</option>
+              <option value="last_7_days">7 ngày qua</option>
+              <option value="last_30_days">30 ngày qua</option>
+              <option value="this_week">Tuần này</option>
+              <option value="last_month">Tháng trước</option>
+              <option value="this_quarter">Quý này</option>
+              <option value="this_year">Năm nay</option>
+              <option value="all_time" class="font-bold text-blue-700">★ Toàn thời gian</option>
+              <option value="custom">Tùy chọn ngày...</option>
+          </select>
+          
+          <div id="customDate" class="hidden flex items-center gap-2">
+            <input type="date" id="dateFrom" class="bg-white border border-gray-300 text-sm rounded px-2 py-2 outline-none">
+            <span class="text-gray-400">-</span>
+            <input type="date" id="dateTo" class="bg-white border border-gray-300 text-sm rounded px-2 py-2 outline-none">
+          </div>
+
+          <button onclick="loadStats()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-bold shadow transition flex items-center gap-2 active:scale-95">
+            <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Cập nhật</span>
+          </button>
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading" class="hidden py-20 text-center animate-fade-in">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-100 border-t-indigo-600 mb-4"></div>
+        <p class="text-slate-500 font-medium italic">Đang tổng hợp số liệu...</p>
+    </div>
+
+    <!-- ERROR -->
+    <div id="errorArea" class="hidden bg-red-50 text-red-700 p-4 rounded-lg text-center border border-red-200"></div>
+
+    <!-- MAIN CONTENT -->
+    <div id="mainContent" class="hidden space-y-6">
+        
+        <!-- 1. KEY METRICS (ĐÃ ẨN LỢI NHUẬN & TỒN KHO) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Tổng Doanh Thu -->
+            <div class="card border-l-4 border-l-emerald-500">
+                <div class="flex items-center gap-4">
+                    <div class="stat-icon bg-emerald-100 text-emerald-600"><i class="fas fa-wallet"></i></div>
+                    <div>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Doanh Thu Cá Nhân</p>
+                        <h3 class="text-2xl font-black text-slate-800" id="statRevenue">0</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ĐÃ ẨN: Tổng Lợi Nhuận -->
+            <div class="card border-l-4 border-l-indigo-500 hidden">
+                <div class="flex items-center gap-4">
+                    <div class="stat-icon bg-indigo-100 text-indigo-600"><i class="fas fa-hand-holding-usd"></i></div>
+                    <div>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Tổng Lợi Nhuận</p>
+                        <h3 class="text-xl font-black text-slate-800" id="statProfit">0</h3>
+                        <p class="text-[10px] text-indigo-500 font-bold" id="profitMargin">(0%)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ĐÃ ẨN: Tồn Kho -->
+            <div class="card border-l-4 border-l-purple-500 hidden">
+                <div class="flex items-center gap-4">
+                    <div class="stat-icon bg-purple-100 text-purple-600"><i class="fas fa-boxes"></i></div>
+                    <div>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Giá Trị Tồn Kho</p>
+                        <h3 class="text-2xl font-black text-slate-800" id="statInvValue">0</h3>
+                        <p class="text-[10px] text-gray-400 font-medium" id="statInventory">0 sản phẩm</p>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Đơn Hàng -->
+             <div class="card border-l-4 border-l-pink-500">
+                <div class="flex items-center gap-4">
+                    <div class="stat-icon bg-pink-100 text-pink-600"><i class="fa-solid fa-receipt"></i></div>
+                    <div>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Đơn Hàng Của Bạn</p>
+                        <h3 class="text-2xl font-black text-slate-800" id="statOrders">0</h3>
+                        <p class="text-[10px] text-gray-400 font-medium" id="statCustomers">0 lượt khách</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. CHI TIẾT DỊCH VỤ (ĐÃ ẨN HOÀN TOÀN) -->
+        <div class="hidden grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="card bg-gradient-to-br from-orange-50 to-white border-orange-100">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-orange-600 text-[10px] font-bold uppercase mb-1">Doanh thu Sửa chữa</p>
+                        <h4 class="text-xl font-bold text-slate-800" id="statRepairRevenue">0</h4>
+                    </div>
+                    <div class="text-orange-200 text-2xl"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                </div>
+            </div>
+            <div class="card bg-gradient-to-br from-blue-50 to-white border-blue-100 hidden">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-blue-600 text-[10px] font-bold uppercase mb-1">Lợi nhuận Sửa chữa</p>
+                        <h4 class="text-xl font-bold text-slate-800" id="statRepairProfit">0</h4>
+                    </div>
+                    <div class="text-blue-200 text-2xl"><i class="fa-solid fa-chart-pie"></i></div>
+                </div>
+            </div>
+            <div class="card bg-gradient-to-br from-red-50 to-white border-red-100">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-red-600 text-[10px] font-bold uppercase mb-1">Máy đang nhận sửa</p>
+                        <h4 class="text-xl font-bold text-slate-800" id="statFixing">0</h4>
+                    </div>
+                    <div class="text-red-200 text-2xl"><i class="fa-solid fa-hourglass-half"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. CHARTS ROW -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Biểu đồ Doanh thu -->
+            <div class="card col-span-1 lg:col-span-2">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-wave-square text-indigo-500"></i> Biểu Đồ Doanh Thu
+                    </h3>
+                </div>
+                <div class="relative h-80 w-full">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Cơ cấu -->
+            <div class="space-y-6 col-span-1">
+                 <!-- Phương thức thanh toán -->
+                <div class="card h-full">
+                    <h3 class="font-bold text-slate-700 mb-4 text-xs uppercase tracking-widest border-b pb-2">Hình thức thanh toán</h3>
+                    <div class="relative h-64 flex justify-center">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. BOTTOM ROW (Tables) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             <!-- Top Sản Phẩm -->
+             <div class="card overflow-hidden p-0">
+                <div class="p-4 border-b bg-slate-50 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fas fa-fire text-orange-500"></i> Top Sản Phẩm (Của bạn)
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="bg-white text-gray-400 font-bold text-[10px] uppercase">
+                            <tr>
+                                <th class="p-4 border-b">Tên Sản Phẩm</th>
+                                <th class="p-4 border-b text-right">Số Lượng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topProductsBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Đơn Hàng Gần Đây -->
+            <div class="card overflow-hidden p-0">
+                <div class="p-4 border-b bg-slate-50 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fas fa-clock text-blue-500"></i> Giao dịch gần đây
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="bg-white text-gray-400 font-bold text-[10px] uppercase">
+                            <tr>
+                                <th class="p-4 border-b">Ngày</th>
+                                <th class="p-4 border-b">Khách</th>
+                                <th class="p-4 border-b">Sản phẩm</th>
+                                <th class="p-4 border-b text-right">Giá trị</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOrdersBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phân bổ kho (Ẩn hoặc giữ tùy ý, hiện tại ẩn để tập trung doanh số cá nhân) -->
+        <div class="hidden grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card">
+                <h3 class="font-bold text-slate-700 mb-4 text-xs uppercase tracking-widest border-b pb-2">Phân bổ kho</h3>
+                <div class="relative h-48 flex justify-center">
+                    <canvas id="inventoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+  </div>
+
+<script>
+// !!! THAY URL API SAU KHI DEPLOY DashboardCode.gs !!!
+const API_URL = 'https://script.google.com/macros/s/AKfycbz1fnAkD9JLXXgOacKuf_UmIt7Zld8WUy-d62RygK-hDFMcusv0KvTQ8gFgL9dH7eu8/exec'; 
+
+const qs = (s) => document.querySelector(s);
+const formatMoney = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+
+let revenueChartInstance = null;
+let paymentChartInstance = null;
+let inventoryChartInstance = null;
+
+const formatDateToInput = (d) => {
+    let month = '' + (d.getMonth() + 1), day = '' + d.getDate(), year = d.getFullYear();
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+    return [year, month, day].join('-');
+};
+
+function changeTimeRange() {
+    const range = qs('#timeRange').value;
+    const customDiv = qs('#customDate');
+    const now = new Date();
+    let from = new Date();
+    let to = new Date();
+    
+    if (range === 'custom') {
+        customDiv.classList.remove('hidden');
+        return;
+    }
+    
+    customDiv.classList.add('hidden');
+
+    switch(range) {
+        case 'yesterday': from.setDate(now.getDate() - 1); to.setDate(now.getDate() - 1); break;
+        case 'last_7_days': from.setDate(now.getDate() - 6); break;
+        case 'last_30_days': from.setDate(now.getDate() - 29); break;
+        case 'this_week': 
+            const day = now.getDay() || 7;
+            if(day !== 1) from.setDate(now.getDate() - day + 1); 
+            break;
+        case 'this_month': from = new Date(now.getFullYear(), now.getMonth(), 1); break;
+        case 'last_month': 
+            from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            to = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+        case 'this_quarter':
+            const quarter = Math.floor((now.getMonth() + 3) / 3);
+            from = new Date(now.getFullYear(), (quarter - 1) * 3, 1);
+            break;
+        case 'this_year': from = new Date(now.getFullYear(), 0, 1); break;
+        case 'all_time': from = new Date(2022, 0, 1); break;
+    }
+
+    qs('#dateFrom').value = formatDateToInput(from);
+    qs('#dateTo').value = formatDateToInput(to);
+    
+    if(range !== 'custom') loadStats();
+}
+
+async function loadStats() {
+    if(API_URL.includes('AKfycb')) { 
+        qs('#loading').classList.remove('hidden');
+        qs('#mainContent').classList.add('hidden');
+        qs('#errorArea').classList.add('hidden');
+
+        const fromDate = qs('#dateFrom').value;
+        const toDate = qs('#dateTo').value;
+
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "get_stats", fromDate, toDate })
+            });
+            const json = await res.json();
+            
+            if(json.success) {
+                renderDashboard(json.data);
+                qs('#loading').classList.add('hidden');
+                qs('#mainContent').classList.remove('hidden');
+            } else {
+                throw new Error(json.message);
+            }
+        } catch (e) {
+            qs('#loading').classList.add('hidden');
+            qs('#errorArea').classList.remove('hidden');
+            qs('#errorArea').innerText = "Lỗi tải dữ liệu: " + e.message;
+        }
+    } else {
+        alert("Vui lòng cập nhật API_URL từ Google Apps Script Web App!");
+    }
+}
+
+function renderDashboard(data) {
+    // === LỌC DỮ LIỆU THEO NHÂN VIÊN ===
+    const currentUser = localStorage.getItem("NV_TEN");
+    const allOrders = data.recentOrders || []; // Dữ liệu thô từ server (chứa tất cả đơn)
+
+    // Lọc đơn hàng của nhân viên hiện tại
+    const myOrders = allOrders.filter(o => {
+        const saleName = o.SALE || o.sale || "";
+        return saleName.trim().toLowerCase() === (currentUser || "").trim().toLowerCase();
+    });
+
+    // Tính toán lại các chỉ số
+    const myRevenue = myOrders.reduce((sum, o) => sum + (Number(o.PRICE) || 0), 0);
+    const myOrdersCount = myOrders.length;
+    const uniqueCustomers = new Set(myOrders.map(o => o.CUSTOMER || o.SDTKHACH)).size;
+
+    // --- 1. HIỂN THỊ THẺ TỔNG QUAN (Chỉ hiện doanh thu & đơn hàng của NV) ---
+    qs('#statRevenue').innerText = formatMoney(myRevenue);
+    qs('#statOrders').innerText = `${myOrdersCount} đơn hàng`;
+    qs('#statCustomers').innerText = `${uniqueCustomers} lượt khách`;
+    
+    // Ẩn/Hiện thẻ
+    qs('#statInvValue').parentElement.parentElement.classList.add('hidden'); // Ẩn tồn kho
+    qs('#statProfit').parentElement.parentElement.classList.add('hidden');   // Ẩn lợi nhuận (đã ẩn trong HTML)
+
+    // --- 2. TÍNH TOÁN BIỂU ĐỒ (Chỉ dùng dữ liệu của NV) ---
+    // a. Biểu đồ Doanh thu (Daily)
+    const myDailyRevenue = {};
+    myOrders.forEach(o => {
+        // Giả sử o.DATE là DD/MM/YYYY hoặc YYYY-MM-DD. Chuẩn hóa về YYYY-MM-DD để sort
+        let d = o.DATE;
+        // Nếu backend trả về DD/MM/YYYY thì chart có thể bị lỗi sort, nhưng tạm thời dùng key này để group
+        myDailyRevenue[d] = (myDailyRevenue[d] || 0) + (Number(o.PRICE) || 0);
+    });
+
+    // b. Biểu đồ Thanh toán
+    const myPaymentMethods = { CK: 0, TM: 0, NO: 0, COC: 0 };
+    myOrders.forEach(o => {
+        let method = o.PTTT || o.method || 'TM';
+        method = method.toUpperCase();
+        if (myPaymentMethods[method] !== undefined) {
+            myPaymentMethods[method] += (Number(o.PRICE) || 0); // Tính tổng tiền theo phương thức
+        }
+    });
+
+    // --- 3. BẢNG TOP SẢN PHẨM (Tính lại từ đơn của NV) ---
+    const productCount = {};
+    myOrders.forEach(o => {
+        const pName = o.NAME || "Khác";
+        productCount[pName] = (productCount[pName] || 0) + 1;
+    });
+    const myTopProducts = Object.keys(productCount).map(name => ({
+        name: name,
+        count: productCount[name]
+    })).sort((a, b) => b.count - a.count).slice(0, 5); // Top 5
+
+    // --- RENDER GIAO DIỆN ---
+    renderRevenueChart(myDailyRevenue);
+    renderPaymentChart(myPaymentMethods); // Dùng object đã tính lại (tổng tiền)
+    renderTopProducts(myTopProducts);
+    renderRecentOrders(myOrders); // Chỉ hiện đơn của NV
+}
+
+function renderTopProducts(list) {
+    const topBody = qs('#topProductsBody');
+    topBody.innerHTML = '';
+    if(list && list.length > 0) {
+        list.forEach((p, index) => {
+            topBody.innerHTML += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-4 font-medium text-slate-700 flex items-center gap-3">
+                        <span class="w-6 h-6 flex items-center justify-center rounded bg-slate-100 text-[10px] font-bold">${index+1}</span>
+                        ${p.name}
+                    </td>
+                    <td class="p-4 text-right font-black text-indigo-600">${p.count}</td>
+                </tr>`;
+        });
+    } else {
+        topBody.innerHTML = `<tr><td colspan="2" class="p-10 text-center text-slate-400 italic">Chưa có dữ liệu bán hàng</td></tr>`;
+    }
+}
+
+function renderRecentOrders(orders) {
+    const recentBody = qs('#recentOrdersBody');
+    recentBody.innerHTML = '';
+    if(orders && orders.length > 0) {
+        // Sort lại theo ngày mới nhất (giả sử dữ liệu backend đã sort, nếu chưa thì sort ở đây)
+        // orders.sort...
+        orders.slice(0, 10).forEach(ord => {
+            recentBody.innerHTML += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-4 text-xs text-slate-500 font-medium">${ord.DATE}</td>
+                    <td class="p-4 font-bold text-slate-700">${ord.CUSTOMER || 'Khách lẻ'}</td>
+                    <td class="p-4 text-xs text-slate-600 truncate max-w-[120px]">${ord.NAME}</td>
+                    <td class="p-4 text-right font-bold text-emerald-600">${formatMoney(ord.PRICE)}</td>
+                </tr>`;
+        });
+    } else {
+        recentBody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-400 italic">Không có giao dịch trong kỳ này</td></tr>`;
+    }
+}
+
+function renderRevenueChart(dailyData) {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    if (revenueChartInstance) revenueChartInstance.destroy();
+
+    // Sort dates
+    const sortedDates = Object.keys(dailyData || {}).sort((a,b) => {
+        // Basic sort for YYYY-MM-DD. If DD/MM/YYYY, this might be incorrect but consistent with source
+        return a.localeCompare(b);
+    });
+    const values = sortedDates.map(d => dailyData[d]);
+    // Format label display
+    const labels = sortedDates.map(d => {
+        if(d.includes('-')) return d.split('-').slice(1).reverse().join('/');
+        return d; 
+    });
+
+    revenueChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#4f46e5',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1e293b', callbacks: { label: (c) => formatMoney(c.raw) } } },
+            scales: { 
+                y: { beginAtZero: true, grid: { borderDash: [5, 5] }, ticks: { callback: v => v >= 1000000 ? (v/1000000).toFixed(1) + 'tr' : v.toLocaleString() } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderPaymentChart(pmData) {
+    const ctx = document.getElementById('paymentChart').getContext('2d');
+    if (paymentChartInstance) paymentChartInstance.destroy();
+
+    // pmData bây giờ là Tổng Tiền theo phương thức (không phải số lượng)
+    const labels = ['Chuyển khoản', 'Tiền mặt', 'Nợ', 'Cọc'];
+    const dataValues = [pmData.CK||0, pmData.TM||0, pmData.NO||0, pmData.COC||0];
+
+    paymentChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: dataValues,
+                backgroundColor: ['#6366f1', '#10b981', '#f43f5e', '#f59e0b'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10, weight: 'bold' }, padding: 15 } },
+                tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatMoney(c.raw)}` } }
+            }
+        }
+    });
+}
+
+// Khởi tạo
+changeTimeRange();
+</script>
+</body>
+</html>

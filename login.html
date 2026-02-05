@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Đăng nhập nhân viên</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="h-screen flex items-center justify-center bg-gray-100">
+
+<div class="bg-white p-6 rounded-xl shadow w-80">
+  <h1 class="text-lg font-bold mb-4 text-center">Đăng nhập</h1>
+
+  <select id="nvSelect" class="w-full border p-2 rounded mb-3">
+    <option value="">-- Chọn nhân viên --</option>
+  </select>
+
+  <input id="pw"
+    type="password"
+    placeholder="Mật khẩu"
+    class="w-full border p-2 rounded mb-4">
+
+  <button onclick="login()"
+    class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+    Vào hệ thống
+  </button>
+
+  <p id="err" class="text-sm text-red-500 mt-3 hidden"></p>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwnihSbsSTe3K58HxCRTFAbLLyeAPLSpL1pNOdYBDUY3cNkuhAokl_aNnLDIWJZz0jV/exec";
+
+const select = document.getElementById("nvSelect");
+const errEl  = document.getElementById("err");
+
+// Load danh sách NV
+fetch(`${API_URL}?action=getNhanVien`)
+  .then(r => r.json())
+  .then(data => {
+    data.forEach(nv => {
+      const opt = document.createElement("option");
+      opt.value = nv.id;
+      opt.textContent = `NV ${nv.id} - ${nv.ten}`;
+      opt.dataset.ten = nv.ten;
+      select.appendChild(opt);
+    });
+  });
+
+function login() {
+  const id = select.value;
+  const pw = document.getElementById("pw").value.trim();
+
+  if (!id || !pw) {
+    showErr("Vui lòng chọn NV và nhập mật khẩu");
+    return;
+  }
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "login",
+      id: id,
+      pw: pw
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) {
+      showErr(res.message || "Đăng nhập thất bại");
+      return;
+    }
+
+    localStorage.setItem("NV_ID", res.id);
+    localStorage.setItem("NV_TEN", res.ten);
+
+    window.location.href = "index.html";
+  })
+  .catch(e => showErr("Lỗi kết nối server"));
+}
+
+function showErr(msg) {
+  errEl.textContent = msg;
+  errEl.classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
