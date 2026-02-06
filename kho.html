@@ -6,10 +6,10 @@
   <title>Quản Lý Kho Máy (Serial)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Times+New+Roman:wght@400;700&display=swap" rel="stylesheet">
    
   <style>
-    /* Tùy chỉnh thanh cuộn */
+    /* --- CORE STYLES --- */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #15803d; border-radius: 4px; }
@@ -17,33 +17,59 @@
     
     body { font-family: 'Roboto', sans-serif; }
     
-    /* Animation Modal */
     .modal-open { opacity: 1; transform: scale(1); pointer-events: auto; }
     .modal-hide { opacity: 0; transform: scale(0.95); pointer-events: none; }
-    
-    /* Cố định cột hành động bên phải */
     .sticky-col-shadow { box-shadow: -4px 0 10px -4px rgba(0,0,0,0.1); }
 
-    /* Location Badge */
+    /* Badges */
     .loc-badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
     .loc-kho { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
     .loc-cn1 { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
     .loc-cn2 { background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; }
-
-    /* Cọc Badge */
     .coc-badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; display: inline-block; white-space: nowrap; margin-right: 5px;}
 
-    /* Checkbox custom */
     .custom-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #15803d; }
-    
-    /* Hiệu ứng khi click copy */
     .copy-feedback { animation: flash 0.5s; background-color: #dcfce7 !important; }
     @keyframes flash { 0% { background-color: #dcfce7; } 100% { background-color: transparent; } }
+
+    /* --- CONTRACT PRINT STYLES --- */
+    .page-container {
+        width: 210mm; margin: 0 auto; background: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 20px;
+        min-height: 297mm; padding: 0; box-sizing: border-box; position: relative; overflow: hidden;
+    }
+    .contract-sheet {
+        font-family: 'Times New Roman', serif; width: 100%; height: 100%;
+        position: relative; padding: 20mm 20mm; box-sizing: border-box; 
+        font-size: 12pt; color: #000; line-height: 1.4;
+    }
+    .contract-header { text-align: center; font-weight: bold; text-transform: uppercase; margin-bottom: 15px; }
+    .section-title { font-weight: bold; text-transform: uppercase; font-size: 11pt; margin-top: 10px; margin-bottom: 5px; background-color: #eee; padding: 4px; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .dotted-input { border-bottom: 1px dotted #000; display: inline-block; min-width: 50px; font-weight: bold; padding: 0 5px; }
+    .asset-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11pt; }
+    .asset-table th, .asset-table td { border: 1px solid #000; padding: 6px; text-align: center; vertical-align: middle; }
+    .asset-table th { background-color: #f3f4f6; font-weight: bold; }
+    
+    /* --- PRINT MEDIA QUERY --- */
+    @media print {
+        @page { size: A4 portrait; margin: 0; }
+        body { background-color: white; height: auto !important; overflow: visible !important; }
+        #main-layout, #modal, #depositModal, #actionSheet, #contract-toolbar, #contract-mobile-tabs, #reportModal { display: none !important; }
+        
+        #contractModal { position: static !important; width: 100% !important; height: auto !important; overflow: visible !important; background: white !important; display: block !important; z-index: 9999; }
+        #contract-input-panel { display: none !important; }
+        #contract-preview-panel { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; background: white !important; }
+        #preview-wrapper { transform: none !important; width: 100% !important; }
+        .page-container { box-shadow: none !important; margin: 0 !important; width: 210mm !important; height: 290mm !important; page-break-after: always !important; border: none !important; }
+        .contract-sheet { padding: 10mm 15mm 5mm 15mm !important; }
+    }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen text-sm text-gray-800">
 
-<div class="p-4 w-full max-w-[1600px] mx-auto pb-20">
+<!-- MAIN LAYOUT: KHO MÁY -->
+<div id="main-layout" class="p-4 w-full max-w-[1600px] mx-auto pb-20">
   <!-- Header -->
   <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 mb-4">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b border-gray-100 pb-4 gap-4">
@@ -55,12 +81,11 @@
       </div>
       <div class="text-right flex flex-col items-end">
         <div class="flex items-center gap-4">
-             <!-- ĐÃ ẨN TỔNG VỐN -->
              <div class="hidden">
                 <div class="text-xs text-gray-400 uppercase font-bold">Tổng Vốn</div>
                 <div id="totalValue" class="text-xl font-bold text-red-600 leading-none">0 ₫</div>
              </div>
-             <div class="border-l pl-4 hidden md:block border-none pl-0"> <!-- Bỏ border do ẩn vốn -->
+             <div class="md:block border-none pl-0"> 
                 <div class="text-xs text-gray-400 uppercase font-bold">Sản phẩm</div>
                 <div id="totalCount" class="text-3xl font-bold text-gray-800 leading-none">0</div>
              </div>
@@ -93,21 +118,21 @@
         </div>
 
         <div class="flex gap-2 shrink-0">
-            <!-- Nút Copy Nhiều -->
             <button id="btnCopyMulti" onclick="copySelectedItems()" class="hidden px-4 py-2.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 font-bold transition-colors shadow-sm flex items-center gap-2">
                 <i class="fa-regular fa-copy"></i> <span id="lblCopyMulti">Copy (0)</span>
             </button>
 
-            <!-- Nút Xuất TXT -->
             <button onclick="exportToTxt()" class="px-4 py-2.5 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 font-medium transition-colors shadow-sm flex items-center gap-2" title="Xuất ra Notepad">
                 <i class="fa-solid fa-file-lines"></i> TXT
+            </button>
+            
+            <!-- NÚT TẠO PHIẾU THU -->
+            <button onclick="openContractModal()" class="px-5 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-bold shadow-sm flex items-center gap-2 transition-transform active:scale-95">
+                <i class="fa-solid fa-file-invoice"></i> <span class="hidden sm:inline">Tạo Phiếu Thu</span>
             </button>
 
             <button onclick="loadData()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors flex items-center gap-2 shadow-sm border border-gray-200">
                 <i class="fa-solid fa-rotate"></i>
-            </button>
-            <button onclick="openModal('add')" class="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Thêm Máy</span>
             </button>
         </div>
     </div>
@@ -143,27 +168,19 @@
   </div>
 </div>
 
-<!-- ================= MODAL ADD/EDIT ================= -->
+<!-- ================= MODAL SỬA THÔNG TIN (Chỉ còn dùng để Sửa) ================= -->
 <div id="modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm hidden">
   <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transform transition-all duration-200 scale-95">
     
     <div class="flex justify-between items-center p-4 border-b shrink-0 bg-green-50">
         <h2 class="text-lg font-bold text-green-800 flex items-center gap-2">
-            <i class="fa-solid fa-mobile"></i> <span id="modalTitle">Nhập Kho Máy</span>
+            <i class="fa-solid fa-pen-to-square"></i> <span id="modalTitle">Sửa Thông Tin Máy</span>
         </h2>
         <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 text-xl">&times;</button>
     </div>
 
-    <!-- Tabs cho chế độ Nhập -->
-    <div id="addTabs" class="flex border-b text-sm bg-white shrink-0">
-        <button onclick="switchAddTab('single')" id="tabSingle" class="flex-1 py-3 font-bold text-green-700 border-b-2 border-green-700 bg-green-50 transition-colors">Nhập Lẻ</button>
-        <button onclick="switchAddTab('bulk')" id="tabBulk" class="flex-1 py-3 text-gray-500 font-medium hover:bg-gray-50 transition-colors">Nhập Lô (Excel)</button>
-    </div>
-
     <div class="p-6 overflow-y-auto flex-1 space-y-4">
-        <input type="hidden" id="item_key"> <!-- Key sửa (SERI) -->
-
-        <!-- Form Nhập Lẻ -->
+        <input type="hidden" id="item_key">
         <div id="formSingle">
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2 md:col-span-1">
@@ -182,8 +199,6 @@
                  <div><label class="block text-xs font-bold text-gray-600 mb-1">Sim/Wifi</label><input type="text" id="inp_sim" class="w-full border p-2 rounded outline-none focus:border-green-500"></div>
                  <div><label class="block text-xs font-bold text-gray-600 mb-1">Tình trạng</label><input type="text" id="inp_tt" class="w-full border p-2 rounded outline-none focus:border-green-500" placeholder="VD: 99"></div>
                  <div><label class="block text-xs font-bold text-gray-600 mb-1">Pin (%)</label><input type="number" id="inp_pin" class="w-full border p-2 rounded outline-none focus:border-green-500"></div>
-                 
-                 <!-- Chọn Sheet lưu -->
                  <div>
                     <label class="block text-xs font-bold text-gray-600 mb-1">Loại Máy (Sheet)</label>
                     <select id="inp_type_device" class="w-full border p-2 rounded bg-white outline-none focus:border-green-500">
@@ -192,37 +207,25 @@
                         <option value="PHUKIEN">PHUKIEN (Có Seri)</option>
                     </select>
                  </div>
-                 
-                 <!-- Chọn Vị trí nhập (Mặc định Kho Tổng) -->
-<div class="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200 hidden">
-    <label class="block text-xs font-bold text-yellow-800 mb-1">VỊ TRÍ NHẬP KHO</label>
-    <select id="inp_location" class="w-full border border-yellow-400 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none bg-white font-bold text-gray-700 cursor-pointer">
-        <option value="KHO" selected>🏠 KHO TỔNG (Mặc định)</option>
-        <option value="CN1">🏢 CHI NHÁNH 1</option>
-        <option value="CN2">🏢 CHI NHÁNH 2</option>
-    </select>
-</div>
-
+                 <div class="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200 hidden">
+                    <label class="block text-xs font-bold text-yellow-800 mb-1">VỊ TRÍ NHẬP KHO</label>
+                    <select id="inp_location" class="w-full border border-yellow-400 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none bg-white font-bold text-gray-700 cursor-pointer">
+                        <option value="KHO" selected>🏠 KHO TỔNG (Mặc định)</option>
+                        <option value="CN1">🏢 CHI NHÁNH 1</option>
+                        <option value="CN2">🏢 CHI NHÁNH 2</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded mt-4">
-<div>
-  <label class="block text-xs font-bold text-red-600 mb-1">
-    GIÁ BÁN (nghìn) 🔒
-  </label>
-  <input 
-    type="text"
-    id="inp_giaban"
-    class="w-full border border-red-300 rounded p-2 font-bold text-red-700 bg-gray-100 cursor-not-allowed outline-none"
-    readonly
-    onkeyup="formatCurrency(this)"
-  >
-</div>
-
-                <!-- ẨN GIÁ VỐN -->
-                <div class="hidden">
-                  <label class="block text-xs font-bold text-gray-600 mb-1">GIÁ VỐN</label>
-                  <input type="text" id="inp_gianhap" class="w-full border border-gray-300 rounded p-2 outline-none" onkeyup="formatCurrency(this)">
+            <!-- Khung Giá Bán & Giá Nhập (Luôn ẩn khi sửa, vì chỉ dùng để sửa) -->
+            <div id="price_container" class="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded mt-4 hidden">
+                <div>
+                  <label class="block text-xs font-bold text-red-600 mb-1">GIÁ BÁN (nghìn) 🔒</label>
+                  <input type="text" id="inp_giaban" class="w-full border border-red-300 rounded p-2 font-bold text-red-700 bg-gray-100 cursor-not-allowed outline-none" readonly onkeyup="formatCurrency(this)">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-green-700 mb-1">GIÁ NHẬP (Giá Vốn)</label>
+                  <input type="text" id="inp_gianhap" class="w-full border border-green-300 rounded p-2 outline-none font-bold text-green-800 transition-colors" placeholder="VD: 15.000" onkeyup="formatCurrency(this)">
                 </div>
             </div>
             
@@ -231,35 +234,7 @@
                 <textarea id="inp_note" rows="2" class="w-full border border-gray-300 rounded p-2 outline-none focus:border-green-500"></textarea>
             </div>
         </div>
-
-        <!-- Form Nhập Lô -->
-        <div id="formBulk" class="hidden h-full flex flex-col">
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mb-4 text-xs text-blue-700">
-                <p class="font-bold">Cú pháp nhập (phân cách |):</p>
-                <code class="block mt-1 bg-white p-1 rounded border overflow-x-auto whitespace-nowrap">SERI | TÊN | DL | MÀU | SIM | TT | PIN | GHI CHÚ | GIÁ BÁN | GIÁ NHẬP</code>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                 <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1">Loại Máy</label>
-                    <select id="bulk_type" class="w-full border p-2 rounded bg-white"><option value="PHONE">PHONE</option><option value="IPAD">IPAD</option></select>
-                 </div>
-                 <div>
-                    <label class="block text-xs font-bold text-yellow-800 mb-1">Nhập vào</label>
-                    <select id="bulk_location" class="w-full border border-yellow-400 rounded p-2 font-bold text-gray-700 bg-white">
-                        <option value="KHO" selected>🏠 KHO TỔNG</option>
-                        <option value="CN1">🏢 CHI NHÁNH 1</option>
-                        <option value="CN2">🏢 CHI NHÁNH 2</option>
-                    </select>
-                 </div>
-            </div>
-
-            <textarea id="bulkInput" rows="10" 
-              class="w-full border border-gray-300 rounded-lg p-3 font-mono text-sm focus:ring-2 focus:ring-green-500 outline-none flex-1"
-              placeholder="Paste dữ liệu từ Excel vào đây..."></textarea>
-        </div>
     </div>
-
     <div class="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end gap-3 shrink-0">
       <button onclick="closeModal()" class="px-5 py-2 border rounded-lg hover:bg-gray-100 text-gray-600">Hủy</button>
       <button onclick="saveData()" class="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg font-medium transition transform active:scale-95">
@@ -269,18 +244,125 @@
   </div>
 </div>
 
-<!-- Modal Nhập Cọc -->
+<!-- ================= MODAL TẠO & IN HỢP ĐỒNG ================= -->
+<div id="contractModal" class="fixed inset-0 bg-white z-[60] hidden flex-col overflow-hidden">
+    <!-- Header Modal Hợp Đồng -->
+    <div id="contract-toolbar" class="bg-blue-700 text-white p-3 shadow-md flex justify-between items-center shrink-0">
+        <h2 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-file-contract"></i> Tạo Phiếu Thu</h2>
+        <div class="flex gap-2">
+            <!-- NÚT MỚI: LƯU PHIẾU -->
+            <button onclick="saveContractToSheet()" id="btnSaveContract" class="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1.5 rounded shadow text-sm flex items-center gap-1">
+                <i class="fa-solid fa-cloud-arrow-up"></i> <span class="hidden sm:inline">Lưu Phiếu</span>
+            </button>
+            <button onclick="showContractReport()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-3 py-1.5 rounded shadow text-sm flex items-center gap-1"><i class="fa-solid fa-clipboard-list"></i> <span class="hidden sm:inline">Báo Cáo</span></button>
+            <button onclick="window.print()" class="bg-white text-blue-700 hover:bg-blue-50 font-bold px-4 py-1.5 rounded shadow text-sm"><i class="fa-solid fa-print"></i> In Phiếu</button>
+            <button onclick="closeContractModal()" class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-1.5 rounded shadow text-sm">Đóng</button>
+        </div>
+    </div>
+
+    <!-- TABS MOBILE -->
+    <div id="contract-mobile-tabs" class="md:hidden flex border-b border-gray-200 bg-gray-50 shrink-0">
+         <button onclick="switchContractTab('input')" id="ctab-input" class="flex-1 py-3 text-sm font-bold text-blue-700 border-b-2 border-blue-700 bg-white transition-colors">Nhập Liệu</button>
+         <button onclick="switchContractTab('preview')" id="ctab-preview" class="flex-1 py-3 text-sm text-gray-500 font-medium hover:bg-gray-100 transition-colors">Xem Phiếu</button>
+    </div>
+
+    <!-- Body Modal Hợp Đồng -->
+    <div class="flex flex-1 overflow-hidden relative bg-gray-100">
+        <!-- Panel Nhập Liệu -->
+        <div id="contract-input-panel" class="w-full md:w-1/3 bg-white border-r border-gray-200 z-10 overflow-y-auto p-4 shadow-lg md:block">
+             <div class="mb-4">
+                <h3 class="text-blue-700 font-bold border-b pb-1 mb-3 uppercase text-xs">1. Thông tin Khách (Bên Bán)</h3>
+                <div class="space-y-3">
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Số điện thoại <span class="text-red-500">*</span></label>
+                        <input type="text" id="c_sellerPhone" onchange="autoFillCustomer()" class="w-full border p-2 rounded text-sm outline-none focus:border-blue-500 font-bold text-blue-800 bg-blue-50" placeholder="Nhập SĐT để tự động điền...">
+                        <div id="custLoading" class="hidden absolute right-2 top-8 text-xs text-blue-500"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Họ và tên</label>
+                        <input type="text" id="c_sellerName" class="w-full border p-2 rounded text-sm outline-none focus:border-blue-500 capitalize" oninput="updateContractPreview()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Số CCCD</label>
+                        <input type="text" id="c_sellerCCCD" class="w-full border p-2 rounded text-sm outline-none focus:border-blue-500" oninput="updateContractPreview()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Địa chỉ</label>
+                        <input type="text" id="c_sellerAddress" class="w-full border p-2 rounded text-sm outline-none focus:border-blue-500" oninput="updateContractPreview()">
+                    </div>
+                    
+                    <!-- CCCD Preview -->
+                    <div id="cccd-preview-container" class="hidden mt-2 border-t pt-2 border-gray-100">
+                        <p class="text-xs font-bold text-gray-500 mb-1">Hình ảnh CCCD lưu trữ:</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <img id="view_cccd1" class="w-full h-24 object-contain border rounded bg-gray-100">
+                            <img id="view_cccd2" class="w-full h-24 object-contain border rounded bg-gray-100">
+                        </div>
+                        <div class="mt-2 flex items-center">
+                             <input type="checkbox" id="chk_print_cccd" class="mr-2 h-4 w-4 text-blue-600" checked onchange="updateContractPreview()">
+                             <label for="chk_print_cccd" class="text-xs font-bold text-blue-700 cursor-pointer select-none">In kèm ảnh CCCD vào phiếu</label>
+                        </div>
+                        <input type="hidden" id="store_cccd1">
+                        <input type="hidden" id="store_cccd2">
+                    </div>
+                </div>
+             </div>
+
+             <div class="mb-4">
+                <div class="flex justify-between items-center border-b pb-1 mb-3">
+                    <h3 class="text-blue-700 font-bold uppercase text-xs">2. Danh sách sản phẩm</h3>
+                    <button onclick="addContractProduct()" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 font-bold">+ Thêm</button>
+                </div>
+                <div id="contractProductList" class="space-y-3">
+                    <!-- Products will be added here -->
+                </div>
+             </div>
+             
+             <div class="border-t pt-3 mt-4">
+                 <div class="flex justify-between items-center mb-2">
+                     <span class="font-bold text-gray-700">Tổng Giá Trị:</span>
+                     <input type="text" id="c_totalValue" readonly class="w-1/2 text-right font-bold text-red-600 bg-transparent outline-none" value="0 VNĐ">
+                 </div>
+                 <div class="flex gap-4 text-xs">
+                     <label class="flex items-center"><input type="radio" name="c_payment" value="cash" checked onchange="updateContractPreview()" class="mr-1"> Tiền mặt</label>
+                     <label class="flex items-center"><input type="radio" name="c_payment" value="transfer" onchange="updateContractPreview()" class="mr-1"> Chuyển khoản</label>
+                 </div>
+             </div>
+        </div>
+
+        <!-- Panel Xem Trước (Preview) -->
+        <div id="contract-preview-panel" class="w-full md:w-2/3 bg-gray-500 p-4 overflow-auto justify-center hidden md:flex">
+            <div id="preview-wrapper" class="bg-white shadow-2xl transition-transform origin-top">
+                <div id="printable-area">
+                    <!-- Content will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal (Báo Cáo Thu Máy) -->
+<div id="reportModal" class="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center hidden">
+    <div class="bg-white w-full max-w-md rounded-xl shadow-2xl p-5 m-4">
+        <div class="flex justify-between items-center border-b pb-2 mb-3">
+            <h3 class="font-bold text-lg text-blue-800"><i class="fa-solid fa-list-check"></i> Báo Cáo Thu Máy</h3>
+            <button onclick="qs('#reportModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500 text-xl">&times;</button>
+        </div>
+        <textarea id="reportContent" rows="10" class="w-full border p-3 rounded bg-gray-50 text-sm font-mono focus:outline-none mb-3" readonly></textarea>
+        <button onclick="copyReport()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded shadow transition"><i class="fa-regular fa-copy"></i> Sao Chép</button>
+    </div>
+</div>
+
+<!-- Modal Nhập Cọc (Giữ nguyên) -->
 <div id="depositModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm hidden">
     <div class="bg-white w-full max-w-sm rounded-xl shadow-2xl p-6 relative flex flex-col gap-4">
         <h2 class="font-bold text-lg text-yellow-700 flex items-center gap-2"><i class="fa-solid fa-money-bill-wave"></i> Nhận Cọc Máy</h2>
         <input type="hidden" id="dep_seri">
         <div id="dep_name_serial" class="font-bold text-gray-800 text-center bg-gray-50 p-2 rounded text-sm break-all"></div>
-        
         <div>
             <label class="block text-xs font-bold text-gray-500 mb-1">Thông tin ghi chú hoặc số tiền cọc</label>
             <input type="text" id="dep_info" class="w-full border-2 border-yellow-300 rounded p-2 focus:outline-none font-bold text-red-600" placeholder="VD: 500k - A Tuấn SĐT...">
         </div>
-        
         <div class="flex justify-end gap-2 mt-2">
             <button onclick="closeDepositModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Hủy</button>
             <button onclick="confirmDeposit()" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 font-bold shadow">Lưu Cọc</button>
@@ -288,7 +370,7 @@
     </div>
 </div>
 
-<!-- ACTION SHEET (MENU 3 CHẤM) -->
+<!-- ACTION SHEET -->
 <div id="actionSheet" class="fixed inset-0 bg-black/60 z-50 flex items-end justify-center hidden">
     <div class="bg-white w-full max-w-md rounded-t-2xl shadow-2xl overflow-hidden transform translate-y-full transition-transform duration-200" onclick="event.stopPropagation()">
         <div class="bg-gray-100 p-4 text-center border-b font-bold text-gray-700 truncate" id="mas_title">Tên Máy</div>
@@ -297,7 +379,6 @@
         <div class="p-4 space-y-3">
              <button onclick="triggerAction('deposit')" class="w-full py-3 bg-yellow-50 text-yellow-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-yellow-100"><i class="fa-solid fa-money-bill-1-wave text-lg"></i> Ghi Chú</button>
              <button onclick="triggerAction('edit')" class="w-full py-3 bg-blue-50 text-blue-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-blue-100"><i class="fa-solid fa-pen text-lg"></i> Sửa Thông Tin</button>
-             <!-- ĐÃ BỎ NÚT XÓA MÁY -->
         </div>
         <div class="p-4 border-t">
             <button onclick="closeActionMenu()" class="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold">Hủy Bỏ</button>
@@ -309,150 +390,102 @@
 
 <script>
 // ==========================================
-// ⚠️ Thay link Web App Backend (Code.gs)
-const API_URL = 'https://script.google.com/macros/s/AKfycbz0wygOHQKBXHIRQvUMnyE0GygUKwVfovJu6dxRzIOYdBukyB-k7JGO3xRtzqfUxN8W/exec'; 
+const API_URL = 'https://script.google.com/macros/s/AKfycbw4RBRN3anZlIUAkXj2Q5ww5pPkiYi4Fu3v9IQVwIhT1jxGTq2pP_59arquUV7t5gYq/exec'; 
+// API Khách Hàng (Để tự động điền)
+const API_CUSTOMER = 'https://script.google.com/macros/s/AKfycbx0SlevLfkEkB_b5NDLGqbVVujGxdWKKUU8GXocSdJvXDwxjLK7GOrYBAVeqi0qOFWwww/exec';
+// THÊM: Lấy tên SALE từ localStorage
+const NV_TEN = localStorage.getItem('NV_TEN') || "NV_KHO";
 // ==========================================
 
 let allData = [];
-let currentAddTab = 'single';
 let isEditing = false;
-let selectedItems = new Set(); // Stores selected SERIs
+let selectedItems = new Set();
+// Contract Products Array
+let contractProducts = [{ id: 1, name: '', seri: '', condition: '', price: '' }];
 
 const qs = (s) => document.querySelector(s);
 const formatMoney = (n) => n ? Number(String(n).replace(/\D/g, '')).toLocaleString('vi-VN') : '0';
 const parseMoney = (n) => n ? Number(String(n).replace(/\D/g, '')) : 0;
 function formatCurrency(input) { let val = input.value.replace(/\D/g, ''); input.value = val ? Number(val).toLocaleString('vi-VN') : ''; }
+const formatPriceK = (price) => { if(!price) return '0k'; return Number(price).toLocaleString('vi-VN') + 'k'; }
 
-// Helper để định dạng giá theo kiểu 20.000k (Input là 4400 -> Output 4.400k)
-const formatPriceK = (price) => {
-    if(!price) return '0k';
-    return Number(price).toLocaleString('vi-VN') + 'k';
-}
-
-// Hàm tạo chuỗi thông tin chuẩn để copy/xuất
 function getItemInfoString(item) {
     const tinhTrangStr = item.TINHTRANG ? (String(item.TINHTRANG).includes('%') ? item.TINHTRANG : item.TINHTRANG + '%') : '';
     const parts = [
-        item.NAME,
-        item.DL,
-        item.COLOR ? `màu ${item.COLOR}` : '',
-        item.SIM,
-        tinhTrangStr ? `Tình trạng ${tinhTrangStr}` : '',
-        item.PIN ? `Pin ${item.PIN}%` : '',
+        item.NAME, item.DL, item.COLOR ? `màu ${item.COLOR}` : '', item.SIM,
+        tinhTrangStr ? `Tình trạng ${tinhTrangStr}` : '', item.PIN ? `Pin ${item.PIN}%` : '',
         `giá ${formatPriceK(item.GIABAN)}`
     ];
     return parts.filter(Boolean).join(' ');
 }
 
-// CẬP NHẬT LOAD DATA
+// ================= LOGIC KHO MÁY =================
 async function loadData() {
     qs('#loading').classList.remove('hidden');
     try {
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "get_serialized" })
-        });
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "get_serialized" }) });
         const json = await res.json();
-        
         if(json.success && Array.isArray(json.data)) {
             allData = json.data.reverse(); 
-            selectedItems.clear(); // Reset selection
-            updateSelectionUI();
-            applyFilter();
-        } else {
-            console.error("Dữ liệu lỗi:", json.message);
-            allData = [];
-            renderTable([]);
-        }
+            selectedItems.clear(); updateSelectionUI(); applyFilter();
+        } else { allData = []; renderTable([]); }
     } catch(e) { console.error(e); }
     qs('#loading').classList.add('hidden');
 }
 
-// LOGIC FILTER
 function applyFilter() {
     const k = qs('#searchInput').value.toLowerCase().trim();
     const loc = qs('#filterLocation').value;
     const type = qs('#filterType').value;
-
     let totalValue = 0;
-
     const filtered = allData.filter(item => {
         const nameStr = item.NAME ? String(item.NAME).toLowerCase() : "";
         const seriStr = item.SERI ? String(item.SERI).toLowerCase() : "";
-        
         const matchText = (nameStr.includes(k) || seriStr.includes(k));
         let matchLoc = (loc === 'ALL') ? true : (item.LOCATION || 'KHO') === loc;
         let matchType = (type === 'ALL') ? true : item.TYPE === type;
-
         return matchText && matchLoc && matchType;
     });
-
-    // Vẫn tính toán nhưng không hiển thị
-    filtered.forEach(i => {
-        totalValue += Number(i.GIANHAP) || 0;
-    });
-
+    filtered.forEach(i => { totalValue += Number(i.GIANHAP) || 0; });
     renderTable(filtered);
     qs('#totalCount').innerText = filtered.length;
     qs('#totalValue').innerText = formatMoney(totalValue) + ' ₫';
 }
 
-// MULTI-SELECT & COPY LOGIC
 function toggleAll(el) {
-    const visibleRows = document.querySelectorAll('.row-checkbox');
-    visibleRows.forEach(cb => {
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
         cb.checked = el.checked;
-        if(el.checked) selectedItems.add(cb.value);
-        else selectedItems.delete(cb.value);
+        if(el.checked) selectedItems.add(cb.value); else selectedItems.delete(cb.value);
     });
     updateSelectionUI();
 }
 
 function toggleRow(seri) {
-    if(selectedItems.has(seri)) selectedItems.delete(seri);
-    else selectedItems.add(seri);
+    if(selectedItems.has(seri)) selectedItems.delete(seri); else selectedItems.add(seri);
     updateSelectionUI();
 }
 
 function updateSelectionUI() {
     const count = selectedItems.size;
     const btn = qs('#btnCopyMulti');
-    const lbl = qs('#lblCopyMulti');
-    
-    if(count > 0) {
-        btn.classList.remove('hidden');
-        lbl.innerText = `Copy (${count})`;
-    } else {
-        btn.classList.add('hidden');
-    }
+    if(count > 0) { btn.classList.remove('hidden'); qs('#lblCopyMulti').innerText = `Copy (${count})`; } 
+    else { btn.classList.add('hidden'); }
 }
 
 function copySelectedItems() {
     if(selectedItems.size === 0) return;
-    
-    // Tìm các item trong allData khớp với SERI đã chọn và giữ thứ tự
     const itemsToCopy = allData.filter(i => selectedItems.has(i.SERI));
-    
     const textToCopy = itemsToCopy.map(item => getItemInfoString(item)).join('\n');
-    
     navigator.clipboard.writeText(textToCopy).then(() => {
-        alert(`Đã copy ${itemsToCopy.length} máy vào clipboard!`);
-        selectedItems.clear();
-        document.querySelectorAll('.custom-checkbox').forEach(cb => cb.checked = false);
-        updateSelectionUI();
+        alert(`Đã copy ${itemsToCopy.length} máy!`); selectedItems.clear();
+        document.querySelectorAll('.custom-checkbox').forEach(cb => cb.checked = false); updateSelectionUI();
     });
 }
 
 function copySingleItem(seri, element) {
-    const item = allData.find(i => i.SERI === seri);
-    if(!item) return;
-    
-    const text = getItemInfoString(item);
-    navigator.clipboard.writeText(text).then(() => {
-        // Visual feedback
-        element.classList.add('copy-feedback');
-        setTimeout(() => element.classList.remove('copy-feedback'), 500);
+    const item = allData.find(i => i.SERI === seri); if(!item) return;
+    navigator.clipboard.writeText(getItemInfoString(item)).then(() => {
+        element.classList.add('copy-feedback'); setTimeout(() => element.classList.remove('copy-feedback'), 500);
     });
 }
 
@@ -460,124 +493,64 @@ function exportToTxt() {
     const k = qs('#searchInput').value.toLowerCase().trim();
     const loc = qs('#filterLocation').value;
     const type = qs('#filterType').value;
-
-    // Lấy dữ liệu đang hiển thị (đã filter)
     const filtered = allData.filter(item => {
         const nameStr = item.NAME ? String(item.NAME).toLowerCase() : "";
         const seriStr = item.SERI ? String(item.SERI).toLowerCase() : "";
-        const matchText = (nameStr.includes(k) || seriStr.includes(k));
-        let matchLoc = (loc === 'ALL') ? true : (item.LOCATION || 'KHO') === loc;
-        let matchType = (type === 'ALL') ? true : item.TYPE === type;
-        return matchText && matchLoc && matchType;
+        return (nameStr.includes(k) || seriStr.includes(k)) && ((loc === 'ALL') ? true : (item.LOCATION || 'KHO') === loc) && ((type === 'ALL') ? true : item.TYPE === type);
     });
-
-    if(filtered.length === 0) return alert("Không có dữ liệu để xuất!");
-
+    if(filtered.length === 0) return alert("Không có dữ liệu!");
     const textContent = filtered.map(item => getItemInfoString(item)).join('\n');
-    
-    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
+    a.href = URL.createObjectURL(new Blob([textContent], { type: "text/plain;charset=utf-8" }));
     a.download = `Danh_sach_may_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
 }
 
 function renderTable(data) {
-    const tbody = qs('#tableBody');
-    tbody.innerHTML = '';
-    
-    if(data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400 italic">Không có dữ liệu</td></tr>`;
-        return;
-    }
-
+    const tbody = qs('#tableBody'); tbody.innerHTML = '';
+    if(data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400 italic">Không có dữ liệu</td></tr>`; return; }
     data.forEach((item, i) => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-green-50 transition-colors border-b last:border-0 group bg-white';
-        
-        // Badge Vị Trí
         const loc = item.LOCATION || 'KHO';
-        let locClass = 'loc-kho';
-        let locIcon = 'fa-warehouse';
-        if(loc === 'CN1') { locClass = 'loc-cn1'; locIcon = 'fa-store'; }
-        if(loc === 'CN2') { locClass = 'loc-cn2'; locIcon = 'fa-store'; }
+        let locClass = loc === 'CN1' ? 'loc-cn1' : (loc === 'CN2' ? 'loc-cn2' : 'loc-kho');
+        let locIcon = loc === 'KHO' ? 'fa-warehouse' : 'fa-store';
         const locBadge = `<span class="loc-badge ${locClass}"><i class="fa-solid ${locIcon}"></i> ${loc === 'KHO' ? 'KHO TỔNG' : loc}</span>`;
-
-        // Chuỗi hiển thị
-        const infoString = getItemInfoString(item).replace(item.COC ? '' : '', ''); // Hacky way to use existing var
-        const displayHtml = infoString.replace(item.NAME, `<strong>${item.NAME}</strong>`)
-                                      .replace(`giá ${formatPriceK(item.GIABAN)}`, `<span class="text-red-600 font-bold">giá ${formatPriceK(item.GIABAN)}</span>`);
-
+        const infoString = getItemInfoString(item).replace(item.COC ? '' : '', ''); 
+        const displayHtml = infoString.replace(item.NAME, `<strong>${item.NAME}</strong>`).replace(`giá ${formatPriceK(item.GIABAN)}`, `<span class="text-red-600 font-bold">giá ${formatPriceK(item.GIABAN)}</span>`);
         const cocHtml = item.COC ? `<span class="coc-badge text-[10px] ml-2">${item.COC}</span>` : '';
-
-        // Check state
         const isChecked = selectedItems.has(item.SERI) ? 'checked' : '';
-
         tr.innerHTML = `
-            <td class="p-3 text-center w-10">
-                <input type="checkbox" value="${item.SERI}" onchange="toggleRow('${item.SERI}')" class="custom-checkbox row-checkbox align-middle" ${isChecked}>
-            </td>
+            <td class="p-3 text-center w-10"><input type="checkbox" value="${item.SERI}" onchange="toggleRow('${item.SERI}')" class="custom-checkbox row-checkbox align-middle" ${isChecked}></td>
             <td class="px-3 py-3 text-center text-xs text-gray-400 font-bold">${i + 1}</td>
-            
-            <td class="px-3 py-3 text-center">
-                ${locBadge}
-            </td>
-
-            <td class="px-3 py-3 font-mono text-xs font-bold text-gray-700 text-center select-all hover:text-green-700 cursor-pointer" onclick="navigator.clipboard.writeText('${item.SERI}')">
-                ${item.SERI}
-            </td>
-
-            <td class="px-3 py-3 text-sm text-gray-800 leading-snug cursor-pointer hover:text-green-800" onclick="copySingleItem('${item.SERI}', this)" title="Click để copy">
-                ${displayHtml} ${cocHtml}
-            </td>
-
-            <td class="px-3 py-3 text-xs text-gray-500 italic max-w-[150px] truncate" title="${item.GHICHU || ''}">
-                ${item.GHICHU || ''}
-            </td>
-
+            <td class="px-3 py-3 text-center">${locBadge}</td>
+            <td class="px-3 py-3 font-mono text-xs font-bold text-gray-700 text-center select-all hover:text-green-700 cursor-pointer" onclick="navigator.clipboard.writeText('${item.SERI}')">${item.SERI}</td>
+            <td class="px-3 py-3 text-sm text-gray-800 leading-snug cursor-pointer hover:text-green-800" onclick="copySingleItem('${item.SERI}', this)" title="Click để copy">${displayHtml} ${cocHtml}</td>
+            <td class="px-3 py-3 text-xs text-gray-500 italic max-w-[150px] truncate" title="${item.GHICHU || ''}">${item.GHICHU || ''}</td>
             <td class="px-2 py-3 text-center sticky right-0 bg-white group-hover:bg-green-50">
-                <button onclick="openActionMenu('${item.SERI}')" class="w-8 h-8 rounded-full text-gray-400 hover:text-green-600 hover:bg-green-100 transition inline-flex items-center justify-center">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                </button>
+                <button onclick="openActionMenu('${item.SERI}')" class="w-8 h-8 rounded-full text-gray-400 hover:text-green-600 hover:bg-green-100 transition inline-flex items-center justify-center"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             </td>
         `;
-
         tbody.appendChild(tr);
     });
 }
 
-// === ACTION SHEET LOGIC (MENU 3 CHẤM) ===
 function openActionMenu(seri) {
     const item = allData.find(i => i.SERI === seri);
-    const name = item ? item.NAME : '';
-
-    qs('#mas_title').innerText = name;
-    qs('#mas_seri').value = seri;
-    qs('#mas_name').value = name;
-    const sheet = qs('#actionSheet');
-    sheet.classList.remove('hidden');
+    qs('#mas_title').innerText = item ? item.NAME : ''; qs('#mas_seri').value = seri; qs('#mas_name').value = item ? item.NAME : '';
+    const sheet = qs('#actionSheet'); sheet.classList.remove('hidden');
     setTimeout(() => { sheet.children[0].classList.remove('translate-y-full'); }, 10);
     sheet.onclick = closeActionMenu;
 }
-
 function closeActionMenu() {
-    const sheet = qs('#actionSheet');
-    sheet.children[0].classList.add('translate-y-full');
+    const sheet = qs('#actionSheet'); sheet.children[0].classList.add('translate-y-full');
     setTimeout(() => { sheet.classList.add('hidden'); }, 200);
 }
-
 function triggerAction(action) {
     const seri = qs('#mas_seri').value;
     const name = qs('#mas_name').value;
     const item = allData.find(i => i.SERI === seri);
-    
-    const sheet = qs('#actionSheet');
-    sheet.children[0].classList.add('translate-y-full');
-    
+    const sheet = qs('#actionSheet'); sheet.children[0].classList.add('translate-y-full');
     setTimeout(() => {
         sheet.classList.add('hidden');
         if(action === 'deposit') openDepositModal(seri, name, item ? item.COC : '');
@@ -585,118 +558,446 @@ function triggerAction(action) {
     }, 200);
 }
 
-// === DEPOSIT LOGIC ===
 function openDepositModal(seri, name, currentCoc) {
     qs('#depositModal').classList.remove('hidden');
     setTimeout(() => { qs('#depositModal').classList.remove('modal-hide'); qs('#depositModal').classList.add('modal-open'); }, 10);
-    qs('#dep_seri').value = seri;
-    qs('#dep_name_serial').innerText = name + " - " + seri;
-    qs('#dep_info').value = currentCoc || '';
+    qs('#dep_seri').value = seri; qs('#dep_name_serial').innerText = name + " - " + seri; qs('#dep_info').value = currentCoc || '';
 }
-
 function closeDepositModal() {
-    qs('#depositModal').classList.remove('modal-open'); 
-    qs('#depositModal').classList.add('modal-hide');
+    qs('#depositModal').classList.remove('modal-open'); qs('#depositModal').classList.add('modal-hide');
     setTimeout(() => qs('#depositModal').classList.add('hidden'), 200);
 }
-
 async function confirmDeposit() {
-    const seri = qs('#dep_seri').value;
-    const info = qs('#dep_info').value.trim();
-    
-    const item = allData.find(i => i.SERI === seri);
-    if(item) {
-        item.COC = info;
-        renderTable(allData); // Refresh table optimistic
-    }
+    const seri = qs('#dep_seri').value; const info = qs('#dep_info').value.trim();
+    const item = allData.find(i => i.SERI === seri); if(item) { item.COC = info; renderTable(allData); }
     closeDepositModal();
-
-    const body = { action: 'update_deposit', SERI: seri, COC_INFO: info };
-    try {
-        await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
-    } catch(e) { alert("Lỗi: " + e.message); loadData(); }
+    try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'update_deposit', SERI: seri, COC_INFO: info }) }); } catch(e) { alert("Lỗi: " + e.message); loadData(); }
 }
 
-// === ACTIONS ===
 function openModal(mode) {
     qs('#modal').classList.remove('hidden'); setTimeout(() => { qs('#modal').classList.remove('modal-hide'); qs('#modal').classList.add('modal-open'); }, 10);
     if(mode === 'add') {
         isEditing = false; qs('#modalTitle').innerText = 'Nhập Kho Máy'; qs('#item_key').value = '';
-        qs('#inp_id').value = ''; qs('#inp_id').disabled = false; qs('#inp_name').value = ''; qs('#inp_dl').value = ''; qs('#inp_color').value = ''; 
-        qs('#inp_sim').value = ''; qs('#inp_tt').value = ''; qs('#inp_pin').value = ''; qs('#inp_giaban').value = ''; qs('#inp_gianhap').value = ''; qs('#inp_note').value = '';
-        qs('#inp_location').value = 'KHO'; qs('#bulk_location').value = 'KHO';
-        qs('#addTabs').classList.remove('hidden'); switchAddTab('single');
+        qs('#inp_id').value = ''; qs('#inp_id').disabled = false; qs('#inp_name').value = ''; qs('#inp_dl').value = ''; 
+        qs('#inp_color').value = ''; qs('#inp_sim').value = ''; qs('#inp_tt').value = ''; qs('#inp_pin').value = ''; 
+        qs('#inp_giaban').value = ''; 
+        qs('#price_container').classList.remove('hidden');
+        qs('#inp_gianhap').value = ''; qs('#inp_gianhap').readOnly = false;
+        qs('#inp_gianhap').classList.remove('bg-gray-100', 'cursor-not-allowed', 'text-gray-500'); qs('#inp_gianhap').classList.add('text-green-800');
+        qs('#inp_note').value = ''; qs('#inp_location').value = 'KHO';
     }
 }
 function openEditModal(seri) {
-    const item = allData.find(i => i.SERI === seri);
-    if(!item) return;
-    openModal(); isEditing = true; qs('#modalTitle').innerText = 'Sửa Thông Tin Máy'; qs('#addTabs').classList.add('hidden'); switchAddTab('single');
+    const item = allData.find(i => i.SERI === seri); if(!item) return;
+    openModal(); isEditing = true; qs('#modalTitle').innerText = 'Sửa Thông Tin Máy';
     qs('#item_key').value = seri; qs('#inp_id').value = seri; qs('#inp_id').disabled = true;
     qs('#inp_name').value = item.NAME; qs('#inp_dl').value = item.DL; qs('#inp_color').value = item.COLOR;
     qs('#inp_sim').value = item.SIM; qs('#inp_tt').value = item.TINHTRANG; qs('#inp_pin').value = item.PIN; qs('#inp_note').value = item.GHICHU;
+    qs('#price_container').classList.add('hidden');
     qs('#inp_giaban').value = formatMoney(item.GIABAN); qs('#inp_gianhap').value = formatMoney(item.GIANHAP);
     qs('#inp_type_device').value = item.TYPE; qs('#inp_location').value = item.LOCATION || 'KHO';
 }
 function closeModal() { qs('#modal').classList.remove('modal-open'); qs('#modal').classList.add('modal-hide'); setTimeout(() => qs('#modal').classList.add('hidden'), 200); }
-function switchAddTab(tab) {
-    currentAddTab = tab;
-    const btnSingle = qs('#tabSingle'); const btnBulk = qs('#tabBulk'); const formSingle = qs('#formSingle'); const formBulk = qs('#formBulk');
-    if(tab === 'single') {
-        btnSingle.className = "flex-1 py-3 font-bold text-green-700 border-b-2 border-green-700 bg-green-50 transition-colors";
-        btnBulk.className = "flex-1 py-3 text-gray-500 font-medium hover:bg-gray-50 transition-colors";
-        formSingle.classList.remove('hidden'); formBulk.classList.add('hidden');
-    } else {
-        btnSingle.className = "flex-1 py-3 text-gray-500 font-medium hover:bg-gray-50 transition-colors";
-        btnBulk.className = "flex-1 py-3 font-bold text-green-700 border-b-2 border-green-700 bg-green-50 transition-colors";
-        formSingle.classList.add('hidden'); formBulk.classList.remove('hidden');
-    }
-}
+
 async function saveData() {
-    let body = {};
-    if (currentAddTab === 'single' || isEditing) {
-        const id = qs('#inp_id').value.trim().toUpperCase(); const name = qs('#inp_name').value.trim();
-        if(!id || !name) return alert("Vui lòng nhập Seri và Tên máy!");
-        const item = {
-            SERI: id, NAME: name, DL: qs('#inp_dl').value, COLOR: qs('#inp_color').value, 
-            SIM: qs('#inp_sim').value, TINHTRANG: qs('#inp_tt').value, PIN: qs('#inp_pin').value, TYPE: qs('#inp_type_device').value,
-            GIABAN: parseMoney(qs('#inp_giaban').value), GIANHAP: parseMoney(qs('#inp_gianhap').value), 
-            GHICHU: qs('#inp_note').value, LOCATION: qs('#inp_location').value || 'KHO'
-        };
-        if(isEditing) {
-            body = { action: 'edit', ...item };
-            const idx = allData.findIndex(x => x.SERI === id);
-            if(idx !== -1) { item._STYLE = allData[idx]._STYLE; allData[idx] = item; }
-        } else {
-            body = { action: 'add_multi', items: [item] };
-            allData.unshift(item);
-        }
-    } else { 
-        const rawText = qs('#bulkInput').value.trim();
-        if(!rawText) return alert("Vui lòng nhập dữ liệu!");
-        const type = qs('#bulk_type').value; const location = qs('#bulk_location').value || 'KHO'; const items = [];
-        rawText.split('\n').forEach(line => {
-            const p = line.split('|').map(t => t.trim());
-            if (p.length >= 2) {
-                items.push({
-                    SERI: p[0], NAME: p[1], DL: p[2]||'', COLOR: p[3]||'', SIM: p[4]||'',
-                    TINHTRANG: p[5]||'', PIN: p[6]||'', GHICHU: p[7]||'',
-                    GIABAN: parseMoney(p[8]), GIANHAP: parseMoney(p[9]), TYPE: type, LOCATION: location
-                });
-            }
-        });
-        if(items.length===0) return alert("Dữ liệu lỗi!");
-        body = { action: 'add_multi', items: items };
-        allData = [...items.reverse(), ...allData];
-    }
+    const id = qs('#inp_id').value.trim().toUpperCase(); const name = qs('#inp_name').value.trim();
+    if(!id || !name) return alert("Vui lòng nhập Seri và Tên máy!");
+    const item = {
+        SERI: id, NAME: name, DL: qs('#inp_dl').value, COLOR: qs('#inp_color').value, 
+        SIM: qs('#inp_sim').value, TINHTRANG: qs('#inp_tt').value, PIN: qs('#inp_pin').value, TYPE: qs('#inp_type_device').value,
+        GIABAN: parseMoney(qs('#inp_giaban').value), GIANHAP: parseMoney(qs('#inp_gianhap').value), 
+        GHICHU: qs('#inp_note').value, LOCATION: qs('#inp_location').value || 'KHO'
+    };
+    let body = isEditing ? { action: 'edit', ...item } : { action: 'add_multi', items: [item] };
+    if(isEditing) { const idx = allData.findIndex(x => x.SERI === id); if(idx !== -1) allData[idx] = item; } else allData.unshift(item);
     applyFilter(); closeModal();
-    try { await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) }); setTimeout(loadData, 500); } catch(e) { alert("Lỗi lưu: " + e.message); loadData(); }
+    try { await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) }); setTimeout(loadData, 500); } catch(e) { alert("Lỗi lưu: " + e.message); loadData(); }
 }
-async function deleteProduct(seri) {
-  if(!confirm(`Xóa máy Seri: ${seri}?`)) return;
-  const oldData = [...allData]; allData = allData.filter(i => i.SERI !== seri); qs('#totalCount').innerText = allData.length; applyFilter();
-  try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', SERI: seri }) }); } catch(e) { alert("Lỗi xóa: " + e.message); allData = oldData; applyFilter(); }
+
+// ================= LOGIC TẠO HỢP ĐỒNG (MỚI) =================
+function openContractModal() {
+    qs('#contractModal').classList.remove('hidden');
+    qs('#contractModal').classList.add('flex');
+    // Reset form
+    contractProducts = [{ id: 1, name: '', seri: '', condition: '', price: '' }];
+    renderContractProducts();
+    
+    // Clear old customer info
+    qs('#c_sellerPhone').value = '';
+    qs('#c_sellerName').value = '';
+    qs('#c_sellerCCCD').value = '';
+    qs('#c_sellerAddress').value = '';
+    qs('#c_totalValue').value = '0 VNĐ';
+    
+    // Reset CCCD images
+    qs('#store_cccd1').value = '';
+    qs('#store_cccd2').value = '';
+    qs('#view_cccd1').src = '';
+    qs('#view_cccd2').src = '';
+    qs('#cccd-preview-container').classList.add('hidden');
+    
+    updateContractPreview();
+    autoScaleContractPreview();
+    switchContractTab('input');
 }
+
+function closeContractModal() {
+    qs('#contractModal').classList.add('hidden');
+    qs('#contractModal').classList.remove('flex');
+}
+
+function switchContractTab(tab) {
+    const inputPanel = qs('#contract-input-panel');
+    const previewPanel = qs('#contract-preview-panel');
+    const tabInput = qs('#ctab-input');
+    const tabPreview = qs('#ctab-preview');
+
+    if (tab === 'input') {
+        inputPanel.classList.remove('hidden');
+        previewPanel.classList.remove('flex'); 
+        previewPanel.classList.add('hidden');
+        tabInput.className = "flex-1 py-3 text-sm font-bold text-blue-700 border-b-2 border-blue-700 bg-white transition-colors";
+        tabPreview.className = "flex-1 py-3 text-sm text-gray-500 font-medium hover:bg-gray-100 transition-colors";
+    } else {
+        inputPanel.classList.add('hidden');
+        previewPanel.classList.remove('hidden');
+        previewPanel.classList.add('flex'); 
+        tabInput.className = "flex-1 py-3 text-sm text-gray-500 font-medium hover:bg-gray-100 transition-colors";
+        tabPreview.className = "flex-1 py-3 text-sm font-bold text-blue-700 border-b-2 border-blue-700 bg-white transition-colors";
+        setTimeout(autoScaleContractPreview, 50); 
+    }
+}
+
+// 1. Tự động điền khách hàng
+async function autoFillCustomer() {
+    const phone = qs('#c_sellerPhone').value.trim();
+    if (!phone) return;
+    
+    qs('#custLoading').classList.remove('hidden');
+    try {
+        const res = await fetch(API_CUSTOMER);
+        const json = await res.json();
+        if (Array.isArray(json)) {
+            const cust = json.find(c => String(c.SDT).includes(phone)); 
+            if (cust) {
+                qs('#c_sellerName').value = cust.TEN || '';
+                qs('#c_sellerCCCD').value = cust.CCCD ? String(cust.CCCD).replace(/'/g, '') : '';
+                qs('#c_sellerAddress').value = cust.DIACHI || '';
+                qs('#c_sellerPhone').value = cust.SDT ? String(cust.SDT).replace(/'/g, '') : phone;
+                
+                // Load CCCD images if available
+                if (cust.CCCD1 || cust.CCCD2) {
+                    qs('#cccd-preview-container').classList.remove('hidden');
+                    if(cust.CCCD1) {
+                        qs('#view_cccd1').src = cust.CCCD1;
+                        qs('#store_cccd1').value = cust.CCCD1;
+                    }
+                    if(cust.CCCD2) {
+                        qs('#view_cccd2').src = cust.CCCD2;
+                        qs('#store_cccd2').value = cust.CCCD2;
+                    }
+                } else {
+                    qs('#cccd-preview-container').classList.add('hidden');
+                    qs('#store_cccd1').value = '';
+                    qs('#store_cccd2').value = '';
+                }
+                
+                updateContractPreview();
+            }
+        }
+    } catch (e) {
+        console.error("Lỗi lấy khách hàng:", e);
+    }
+    qs('#custLoading').classList.add('hidden');
+}
+
+// 2. Quản lý sản phẩm trong hợp đồng
+function renderContractProducts() {
+    const container = qs('#contractProductList');
+    container.innerHTML = '';
+    contractProducts.forEach((prod, index) => {
+        const div = document.createElement('div');
+        div.className = "bg-gray-50 p-2 rounded border border-gray-200 shadow-sm relative text-xs";
+        div.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+                <span class="font-bold text-gray-500">Sản phẩm #${index + 1}</span>
+                ${contractProducts.length > 1 ? `<button onclick="removeContractProduct(${prod.id})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>` : ''}
+            </div>
+            <div class="space-y-2">
+                <input type="text" class="w-full border p-1.5 rounded focus:border-blue-500 outline-none font-bold" placeholder="Tên SP & Model" value="${prod.name}" oninput="updateCP(${prod.id}, 'name', this.value)">
+                <div class="flex gap-2">
+                    <input type="text" class="w-2/3 border p-1.5 rounded focus:border-blue-500 outline-none uppercase font-mono" placeholder="IMEI/Serial" value="${prod.seri}" oninput="updateCP(${prod.id}, 'seri', this.value)">
+                    <input type="text" class="w-1/3 border p-1.5 rounded focus:border-blue-500 outline-none" placeholder="Tình trạng" value="${prod.condition}" oninput="updateCP(${prod.id}, 'condition', this.value)">
+                </div>
+                <input type="text" class="w-full border p-1.5 rounded font-bold text-red-600 focus:border-blue-500 outline-none" placeholder="Giá mua (VNĐ)" value="${prod.price}" oninput="formatCurrency(this); updateCP(${prod.id}, 'price', this.value)">
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function updateCP(id, field, val) {
+    const p = contractProducts.find(x => x.id === id);
+    if(p) { 
+        p[field] = val; 
+        if(field === 'price') updateContractTotal();
+        updateContractPreview(); 
+    }
+}
+
+function addContractProduct() {
+    const newId = contractProducts.length > 0 ? Math.max(...contractProducts.map(p => p.id)) + 1 : 1;
+    contractProducts.push({ id: newId, name: '', seri: '', condition: '', price: '' });
+    renderContractProducts();
+    updateContractPreview();
+}
+
+function removeContractProduct(id) {
+    contractProducts = contractProducts.filter(p => p.id !== id);
+    renderContractProducts();
+    updateContractTotal();
+    updateContractPreview();
+}
+
+function updateContractTotal() {
+    let total = 0;
+    contractProducts.forEach(p => {
+        const price = parseInt(String(p.price).replace(/\./g, '')) || 0;
+        total += price;
+    });
+    qs('#c_totalValue').value = new Intl.NumberFormat('vi-VN').format(total) + " VNĐ";
+    updateContractPreview();
+}
+
+// 3. Render Preview
+function updateContractPreview() {
+    const today = new Date();
+    const dateStr = `Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}`;
+    const totalPriceVal = qs('#c_totalValue').value.replace(' VNĐ', '');
+    const paymentVal = document.querySelector('input[name="c_payment"]:checked')?.value || 'cash';
+    
+    // Get CCCD images
+    const cccd1 = qs('#store_cccd1').value;
+    const cccd2 = qs('#store_cccd2').value;
+    const printCCCD = qs('#chk_print_cccd').checked;
+
+    const data = {
+        date: dateStr,
+        sellerName: qs('#c_sellerName').value.toUpperCase(),
+        sellerCCCD: qs('#c_sellerCCCD').value,
+        sellerPhone: qs('#c_sellerPhone').value,
+        sellerAddress: qs('#c_sellerAddress').value,
+        totalPrice: totalPriceVal,
+        payment: paymentVal,
+        cccd1: printCCCD ? cccd1 : '',
+        cccd2: printCCCD ? cccd2 : ''
+    };
+
+    const printableArea = qs('#printable-area');
+    printableArea.innerHTML = '';
+
+    const rows = contractProducts.map((prod, idx) => `
+        <tr>
+            <td>${idx + 1}</td>
+            <td>${prod.name}</td>
+            <td class="font-bold">${prod.seri}</td>
+            <td>${prod.condition}</td>
+            <td class="font-bold">${prod.price}</td>
+        </tr>
+    `).join('');
+
+    const checkCash = data.payment === 'cash' ? '<i class="fas fa-check-square"></i>' : '▢';
+    const checkTransfer = data.payment === 'transfer' ? '<i class="fas fa-check-square"></i>' : '▢';
+
+    // RENDER TRANG HỢP ĐỒNG
+    printableArea.appendChild(createPage(`
+        <div class="contract-sheet">
+            <div class="contract-header" style="margin-bottom: 5px;">
+                <h1 class="text-2xl font-bold">HỢP ĐỒNG MUA BÁN TÀI SẢN</h1>
+                <p class="text-sm font-normal italic mt-0">${data.date}</p>
+            </div>
+            ${renderBuyerSellerInfo(data)}
+            <div class="mb-2">
+                <div class="section-title">DANH MỤC TÀI SẢN</div>
+                <table class="asset-table">
+                    <thead><tr><th style="width:5%">STT</th><th style="width:35%">Sản phẩm & Model</th><th style="width:25%">IMEI/SERIAL</th><th style="width:15%">Tình trạng</th><th style="width:20%">Giá (VNĐ)</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+            <div class="space-y-1 mt-2 text-sm">
+                <div class="flex justify-between font-bold text-base border-b border-gray-300 pb-1">
+                    <span>TỔNG GIÁ TRỊ: ${data.totalPrice} VNĐ</span>
+                    <span class="font-normal text-sm">Thanh toán: ${checkCash} Tiền mặt &nbsp; ${checkTransfer} CK</span>
+                </div>
+                <div>
+                    <div class="font-bold underline">CAM KẾT & HIỆU LỰC</div>
+                    <ul class="list-disc pl-5 text-justify" style="margin-bottom: 0;">
+                        <li>Không bị khóa iCloud, không trả góp. Tài sản hợp pháp, không tranh chấp.</li>
+                        <li>Cam kết không chỉnh sửa IMEI/Serial. Bên mua đã kiểm tra & đồng ý tình trạng.</li>
+                        <li>Hai bên chịu trách nhiệm trước pháp luật về thông tin. HĐ lập 02 bản giá trị như nhau.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="font-bold text-center mb-2 uppercase underline decoration-2 underline-offset-4">CHỮ KÝ XÁC NHẬN</div>
+                <div class="flex justify-between px-8 text-center">
+                    <div><p class="font-bold mb-24">BÊN BÁN</p><p class="font-bold uppercase">${data.sellerName}</p></div>
+                    <div><p class="font-bold mb-24">BÊN MUA – HỘ KINH DOANH</p><p class="font-bold uppercase">Phan Thị Quỳnh Hương</p></div>
+                </div>
+            </div>
+        </div>
+    `));
+
+    // RENDER BIÊN NHẬN
+    const reason = "Thanh toán tiền mua máy" + (contractProducts.length > 0 ? ` - ${contractProducts[0].name}...` : '');
+    printableArea.appendChild(createPage(`
+        <div class="contract-sheet">
+            <div class="contract-header"><h1 class="text-2xl font-bold">BIÊN NHẬN THANH TOÁN</h1><p class="text-sm font-normal italic mt-1">${data.date}</p></div>
+            <div class="mb-4">
+                <div class="section-title">THÔNG TIN BÊN NHẬN TIỀN (BÊN BÁN)</div>
+                <div class="info-row mb-1"><div class="w-full">- Họ và tên: <span class="dotted-input uppercase w-2/3">${data.sellerName}</span></div></div>
+                <div class="info-row mb-1"><div class="w-full">- Số CCCD: <span class="dotted-input w-2/3">${data.sellerCCCD}</span></div></div>
+                <div class="info-row mb-1"><div class="w-full">- Địa chỉ: <span class="dotted-input w-2/3">${data.sellerAddress}</span></div></div>
+                <div class="info-row mb-1"><div class="w-full">- Số điện thoại: <span class="dotted-input w-2/3">${data.sellerPhone}</span></div></div>
+            </div>
+            <div class="mb-4">
+                <div class="section-title">NỘI DUNG THANH TOÁN</div>
+                <div class="space-y-2 text-lg">
+                    <p>- Số tiền: <span class="font-bold text-xl">${data.totalPrice} VNĐ</span></p>
+                    <p style="word-wrap: break-word;">- Lý do: <span class="dotted-input w-3/4">${reason}</span></p>
+                    <p>- Hình thức: <span class="ml-4 font-bold">${checkCash} Tiền mặt &nbsp;&nbsp; ${checkTransfer} Chuyển khoản</span></p>
+                </div>
+            </div>
+            <div class="mb-2"><div class="font-bold underline mb-1">XÁC NHẬN CỦA BÊN NHẬN TIỀN</div><p class="italic">Tôi đã nhận đủ số tiền ghi trên và không còn khiếu nại.</p></div>
+            <div class="mt-4">
+                <div class="font-bold text-center mb-4 uppercase underline decoration-2 underline-offset-4">CHỮ KÝ XÁC NHẬN</div>
+                <div class="flex justify-between px-8 text-center">
+                    <div><p class="font-bold mb-24">NGƯỜI NHẬN TIỀN</p><p class="font-bold uppercase">${data.sellerName}</p></div>
+                    <div><p class="font-bold mb-24">NGƯỜI LẬP PHIẾU</p><p class="font-bold uppercase">Phan Thị Quỳnh Hương</p></div>
+                </div>
+            </div>
+        </div>
+    `));
+}
+
+function createPage(html) {
+    const div = document.createElement('div'); div.className = 'page-container'; div.innerHTML = html; return div;
+}
+
+function renderBuyerSellerInfo(data) {
+    // Generate CCCD images HTML if available
+    let cccdImagesHtml = '';
+    if (data.cccd1 || data.cccd2) {
+        cccdImagesHtml = `<div class="flex gap-4 mt-2 justify-center">`;
+        if (data.cccd1) cccdImagesHtml += `<img src="${data.cccd1}" style="height: 40mm; max-width: 48%; object-fit: contain; border: 1px solid #ccc;">`;
+        if (data.cccd2) cccdImagesHtml += `<img src="${data.cccd2}" style="height: 40mm; max-width: 48%; object-fit: contain; border: 1px solid #ccc;">`;
+        cccdImagesHtml += `</div>`;
+    }
+
+    return `
+        <div class="mb-2 text-sm">
+            <div class="section-title" style="margin: 2px 0;">BÊN BÁN (CÁ NHÂN)</div>
+            <div class="flex justify-between mb-1"><div class="w-1/2">Họ tên: <span class="font-bold uppercase">${data.sellerName}</span></div><div class="w-1/2">CCCD: <span class="font-bold">${data.sellerCCCD}</span></div></div>
+            <div class="flex justify-between"><div class="w-1/2">SĐT: <span class="font-bold">${data.sellerPhone}</span></div><div class="w-1/2">Đ/c: <span class="font-bold">${data.sellerAddress}</span></div></div>
+            ${cccdImagesHtml}
+        </div>
+        <div class="mb-2 text-sm">
+            <div class="section-title" style="margin: 2px 0;">BÊN MUA (HỘ KINH DOANH)</div>
+            <div class="flex justify-between mb-1"><div class="w-7/12"><strong>HỘ KINH DOANH POLY STORE BÌNH THẠNH</strong></div><div class="w-5/12 text-right">MST: <strong>060197005285</strong></div></div>
+            <div class="mb-1">Đ/c: 170/4/2 Bùi Đình Túy, Phường Bình Thạnh, TP. HCM</div>
+            <div class="flex justify-between"><div>Đại diện: <strong>Phan Thị Quỳnh Hương</strong></div><div>SĐT: <strong>0367185451</strong></div></div>
+        </div>
+    `;
+}
+
+// --- LOGIC BÁO CÁO THU MÁY (NEW) ---
+function showContractReport() {
+    const sellerName = qs('#c_sellerName').value || '(Chưa nhập tên)';
+    const sellerPhone = qs('#c_sellerPhone').value || '(Chưa nhập SĐT)';
+    const sellerCCCD = qs('#c_sellerCCCD').value || '(Chưa nhập CCCD)';
+    const sellerAddress = qs('#c_sellerAddress').value || '(Chưa nhập Đ/c)';
+    const totalVal = qs('#c_totalValue').value || '0 VNĐ';
+    
+    let productText = '';
+    contractProducts.forEach((p, idx) => {
+        productText += `${idx + 1}. ${p.name || 'SP Trống'} - ${p.seri || 'No IMEI'} - ${p.condition || 'TT Trống'} - ${p.price || '0'} VNĐ\n`;
+    });
+
+    const report = `*BÁO CÁO THU MUA MÁY*\n` +
+        `--------------------------\n` +
+        `👤 Khách: ${sellerName}\n` +
+        `📞 SĐT: ${sellerPhone}\n` +
+        `🆔 CCCD: ${sellerCCCD}\n` +
+        `🏠 Địa chỉ: ${sellerAddress}\n` + 
+        `--------------------------\n` +
+        `📦 DANH SÁCH MÁY:\n${productText}` +
+        `--------------------------\n` +
+        `💰 TỔNG TIỀN: ${totalVal}`;
+
+    qs('#reportContent').value = report;
+    qs('#reportModal').classList.remove('hidden');
+}
+
+function copyReport() {
+    const content = qs('#reportContent');
+    content.select();
+    document.execCommand('copy');
+    alert('Đã sao chép báo cáo!');
+    qs('#reportModal').classList.add('hidden');
+}
+
+// --- LƯU PHIẾU VÀO GOOGLE SHEET (NEW FUNCTION) ---
+async function saveContractToSheet() {
+    const btn = qs('#btnSaveContract');
+    
+    // Validate
+    const sellerName = qs('#c_sellerName').value.trim();
+    if(!sellerName) return alert("Vui lòng nhập tên khách hàng!");
+    if(contractProducts.length === 0) return alert("Chưa có sản phẩm nào!");
+
+    // Data payload
+    const payload = {
+        action: 'save_contract',
+        DATE: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        SELLER_NAME: sellerName,
+        SELLER_PHONE: qs('#c_sellerPhone').value.trim(),
+        SELLER_CCCD: qs('#c_sellerCCCD').value.trim(),
+        SELLER_ADDRESS: qs('#c_sellerAddress').value.trim(),
+        TOTAL_VALUE: qs('#c_totalValue').value,
+        PRODUCTS: JSON.stringify(contractProducts), // Gửi mảng SP dưới dạng string
+        SALE: NV_TEN // THÊM: Tên nhân viên tạo phiếu
+    };
+
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...'; btn.disabled = true;
+
+    try {
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if(json.success) {
+            alert("✅ Đã lưu phiếu thành công!");
+        } else {
+            alert("❌ Lỗi: " + json.message);
+        }
+    } catch(e) {
+        alert("❌ Lỗi kết nối: " + e.message);
+    } finally {
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span class="hidden sm:inline">Lưu Phiếu</span>'; btn.disabled = false;
+    }
+}
+
+function autoScaleContractPreview() {
+    if (window.innerWidth < 768) {
+        const wrapper = qs('#preview-wrapper');
+        const containerWidth = qs('#contract-preview-panel').offsetWidth;
+        const scale = (containerWidth - 40) / 830; 
+        if(wrapper) wrapper.style.transform = `scale(${Math.min(scale, 1)})`;
+    }
+}
+window.addEventListener('resize', autoScaleContractPreview);
 
 qs('#searchInput').addEventListener('input', applyFilter);
 loadData();

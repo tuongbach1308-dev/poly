@@ -7,6 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+  <!-- Font cho phiếu in -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Times+New+Roman:wght@400;700&display=swap" rel="stylesheet">
   
   <style>
     /* Base Settings */
@@ -32,26 +34,72 @@
     .sticky-right { position: sticky; right: 0; z-index: 20; }
     .shadow-left { box-shadow: -4px 0 8px -2px rgba(0,0,0,0.1); }
 
-    /* Print Styles */
+    /* Print Styles (FIXED for Multi-page) */
     @media print {
-        body > *:not(#printModal) { display: none !important; }
-        #printModal { display: block !important; position: absolute !important; top: 0; left: 0; width: 100%; height: auto; background: white; z-index: 9999; }
+        body * { visibility: hidden; }
+        #printModal, #printModal * { visibility: visible; }
+        #printModal { 
+            position: absolute; left: 0; top: 0; width: 100%; height: auto; 
+            background: white; z-index: 9999; overflow: visible !important; 
+            display: block !important;
+        }
         #print-editor, #print-mobile-tabs, .no-print { display: none !important; }
-        #print-preview { display: block !important; width: 100% !important; padding: 0 !important; overflow: visible !important; height: auto !important; }
-        #preview-wrapper { transform: none !important; box-shadow: none !important; margin: 0 !important; width: 100% !important; }
-        .page-container { width: 210mm !important; height: auto !important; min-height: 290mm; margin: 0 !important; border: none !important; page-break-after: always; padding: 0 !important; }
-        .warranty-card { padding: 10mm 15mm !important; height: 100% !important; }
+        
+        #print-preview { 
+            display: block !important; 
+            width: 100% !important; 
+            height: auto !important; 
+            overflow: visible !important; 
+            padding: 0 !important; 
+            margin: 0 !important; 
+        }
+        
+        #preview-wrapper { 
+            transform: none !important; 
+            box-shadow: none !important; 
+            margin: 0 !important; 
+            width: 100% !important; 
+        }
+        
+        .page-container { 
+            width: 100% !important; 
+            /* Remove fixed height to prevent cutting */
+            height: auto !important; 
+            min-height: 290mm; /* Ensure approx A4 height */
+            margin: 0 !important; 
+            padding: 0 !important; 
+            border: none !important; 
+            display: block !important; 
+            page-break-after: always !important; /* Force page break */
+            break-after: page;
+            overflow: visible !important;
+        }
+        
+        .page-container:last-child { 
+            page-break-after: auto !important; 
+            break-after: auto;
+        }
+        
+        .warranty-card { 
+            padding: 10mm 15mm !important; 
+            height: 100% !important; 
+        }
+        
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
     
     /* A4 Paper Preview */
-    .page-container { width: 210mm; min-height: 297mm; background: white; margin: 0 auto 20px; padding: 10mm 15mm; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); box-sizing: border-box; }
-    .warranty-card { font-family: 'Times New Roman', serif; width: 100%; font-size: 11pt; color: #000; line-height: 1.4; }
-    .dotted-line { border-bottom: 1px dotted #000; flex-grow: 1; margin-left: 5px; position: relative; height: 1.4em; }
-    .input-value { position: absolute; bottom: 2px; left: 0; font-weight: bold; font-family: 'Roboto', sans-serif; white-space: nowrap; }
-    .tech-check { font-weight: bold; margin-left: 10px; }
-    .tech-check.replaced { color: #dc2626; } .tech-check.original { color: #166534; }
+    .page-container { width: 210mm; height: 296mm; background: white; margin: 0 auto 20px; padding: 0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); box-sizing: border-box; overflow: hidden; position: relative; }
+    .warranty-card { font-family: 'Times New Roman', serif; width: 100%; height: 100%; padding: 10mm 15mm; font-size: 11pt; color: #000; line-height: 1.4; position: relative; box-sizing: border-box; }
+    .dotted-line { border-bottom: 1px dotted #000; flex-grow: 1; margin-left: 5px; position: relative; height: 1.4em; display: inline-block; }
+    .input-value { position: absolute; bottom: 2px; left: 0; font-weight: bold; font-family: 'Roboto', sans-serif; white-space: nowrap; width: 100%; }
     
-    .section-title { font-weight: bold; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #ddd; padding-bottom: 2px; font-size: 12pt; }
+    .tech-check { font-weight: bold; margin-left: 10px; }
+    .tech-check.replaced { color: #dc2626; } 
+    .tech-check.original { color: #166534; }
+    
+    .section-title { font-weight: bold; text-transform: uppercase; font-size: 12pt; margin-top: 15px; margin-bottom: 8px; text-decoration: underline; }
+    .policy-text { text-align: justify; margin-bottom: 6px; line-height: 1.3; font-size: 10.5pt; }
   </style>
 </head>
 <body class="text-gray-800">
@@ -116,11 +164,11 @@
             
             <div class="w-px h-4 bg-gray-300 mx-1"></div>
 
-            <input type="date" id="dateFrom" onchange="filterData()" class="bg-white border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-indigo-500 text-gray-600 font-medium h-[30px]">
-            <span class="self-center text-gray-400 text-xs font-bold px-1">➜</span>
-            <input type="date" id="dateTo" onchange="filterData()" class="bg-white border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-indigo-500 text-gray-600 font-medium h-[30px]">
-            
-            <button onclick="loadMoreMonth()" class="px-3 py-1.5 bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 text-xs font-bold rounded shadow-sm whitespace-nowrap ml-1 transition h-[30px] flex items-center"><i class="fa-solid fa-calendar-minus mr-1"></i> +1 Tháng</button>
+            <!-- CHỈ CÒN CHỌN THÁNG (Mặc định THÁNG NÀY) -->
+            <select id="filterTime" onchange="filterData()" class="bg-white border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-indigo-500 text-indigo-700 font-bold h-[30px] cursor-pointer min-w-[120px]">
+                <option value="THIS_MONTH" selected>📅 Tháng Này</option>
+                <option value="LAST_MONTH">⏮️ Tháng Trước</option>
+            </select>
         </div>
 
         <div class="relative flex-1 w-full">
@@ -298,9 +346,11 @@
             
             <div class="space-y-2">
                 <p class="font-bold text-orange-600 border-b border-orange-100 pb-1 text-xs uppercase">3. Bảo hành & Quà tặng</p>
+                <!-- NEW BAO TEST FIELD -->
+                <input type="text" id="print_baotest" class="w-full border p-2 rounded-lg" placeholder="Thời gian Bao Test (VD: 7 Ngày)" oninput="updatePrintPreview()">
+                
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="print_war1doi1" class="w-full border p-2 rounded-lg" placeholder="TG 1 Đổi 1" oninput="updatePrintPreview()">
-                    <input type="text" id="print_warRepair" class="w-full border p-2 rounded-lg" placeholder="TG Sửa chữa" oninput="updatePrintPreview()">
+                    <input type="text" id="print_warRepair" class="w-full border p-2 rounded-lg col-span-2" placeholder="Thời hạn Bảo Hành (VD: 6 Tháng)" oninput="updatePrintPreview()">
                 </div>
                 <input type="text" id="print_warBattery" class="w-full border p-2 rounded-lg" placeholder="BH Pin" oninput="updatePrintPreview()">
                 <input type="text" id="print_gift" class="w-full border p-2 rounded-lg" placeholder="Quà tặng" oninput="updatePrintPreview()">
@@ -364,9 +414,15 @@
                     <div class="flex items-baseline mb-1"><span class="w-40 shrink-0 font-bold">Tình trạng khi nhận:</span><div class="dotted-line"><span class="input-value" id="prev_prodCond"></span></div></div>
 
                     <div class="section-title text-green-800">3. CHÍNH SÁCH BẢO HÀNH</div>
+                    <!-- NEW BAO TEST LINE -->
+                    <div class="flex items-baseline mb-1">
+                        <span class="shrink-0 mr-2 font-bold">Thời gian bao test:</span>
+                        <div class="dotted-line"><span class="input-value" id="prev_baotest"></span></div>
+                    </div>
+                    
                     <div class="flex items-baseline mb-1">
                         <span class="shrink-0 mr-2 font-bold">Thời hạn bảo hành:</span>
-                        <span class="mr-1 font-bold">(✓) 1 đổi 1</span><div class="dotted-line" style="width: 100px;"><span class="input-value" id="prev_war1doi1"></span></div>
+                        <span class="mr-1 font-bold">(✓) 1 đổi 1</span>
                         <span class="mx-2"></span>
                         <span class="mr-1 font-bold">(✓) Sửa chữa</span><div class="dotted-line grow"><span class="input-value" id="prev_warRepair"></span></div>
                     </div>
@@ -375,16 +431,18 @@
                     
                     <div class="font-bold mb-2 underline text-green-800">Đủ điều kiện bảo hành khi sản phẩm không bị các lỗi như sau:</div>
                     <div class="text-sm space-y-1">
-                        <p class="policy-text">- Sản phẩm va đập, cấn móp hoặc có dấu hiệu tác động vật lý...</p>
-                        <p class="policy-text">- Sản phẩm bị cháy nổ, chập vỉ, chân sạc cháy...</p>
-                        <p class="policy-text">- Sản phẩm bị vào nước, ẩm nước, viền sét đỏ...</p>
+                        <p class="policy-text">- Sản phẩm va đập, cấn móp hoặc có dấu hiệu tác động vật lý</p>
+                        <p class="policy-text">- Sản phẩm bị cháy nổ, chập vỉ, chân sạc cháy</p>
+                        <p class="policy-text">- Sản phẩm bị vào nước, ẩm nước, viền sét đỏ</p>
+                        <p class="policy-text">- Các lỗi phần mềm bên thứ 3</p>
+                        <p class="policy-text">- Khách hàng quên tài khoản iCloud</p>
+                        <p class="policy-text">- Màn hình bị sọc, đốm đen, vàng, trắng</p>
                         <p class="policy-text">- Không còn tem bảo hành.</p>
                     </div>
 
                     <div class="section-title text-green-800">4. CAM KẾT</div>
                     <p class="mb-1 text-sm">- Hoàn tiền 100% nếu không đúng cam kết.</p>
                     <p class="mb-8 text-sm italic text-gray-500">(Vui lòng kiểm tra chi tiết linh kiện và ký xác nhận ở trang sau)</p>
-                    <div class="absolute bottom-0 left-0 w-full h-2 bg-green-700"></div>
                 </div>
             </div>
             
@@ -438,7 +496,6 @@
                             <p class="font-bold uppercase text-lg" id="prev_signName"></p>
                         </div>
                     </div>
-                    <div class="absolute bottom-0 left-0 w-full h-2 bg-green-700"></div>
                 </div>
             </div>
         </div>
@@ -503,21 +560,17 @@ function initSaleSelect(targetValue) {
     else if(nv) sel.value = nv;
 }
 
-// --- DATE FILTERS ---
+// --- DATE FILTERS (UPDATED LOGIC) ---
 function initDateFilters() {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    setVal('dateFrom', formatDateToInput(firstDay));
-    setVal('dateTo', formatDateToInput(today));
+    // Initial load: Set filter to THIS_MONTH
+    const filterSelect = qs('#filterTime');
+    if (filterSelect) filterSelect.value = 'THIS_MONTH';
 }
 
 function loadMoreMonth() {
-    const from = new Date(getVal('dateFrom'));
-    if(!isNaN(from)) {
-        from.setMonth(from.getMonth() - 1);
-        setVal('dateFrom', formatDateToInput(from));
-        filterData();
-    }
+    // Deprecated function, but keeping structure if referenced elsewhere, 
+    // now we rely on filterTime select change
+    filterData();
 }
 
 // --- API ---
@@ -572,9 +625,29 @@ async function loadData() {
 
 function filterData() {
     const k = qs('#searchInput').value.toLowerCase();
-    const fromVal = qs('#dateFrom').value; 
-    const toVal = qs('#dateTo').value;
     const typeVal = qs('#filterCategory').value; // Get select value
+    const timeVal = qs('#filterTime').value; // Get time filter
+
+    // --- DATE FILTER LOGIC ---
+    const now = new Date();
+    let fromDate, toDate;
+
+    if (timeVal === 'THIS_MONTH') {
+        // Start: First day of current month
+        fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        // End: Last day of current month (effectively covers up to now)
+        toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else { // LAST_MONTH
+        // Start: First day of previous month
+        fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        // End: Last day of previous month
+        toDate = new Date(now.getFullYear(), now.getMonth(), 0);
+    }
+    
+    // Convert to YYYY-MM-DD strings for comparison
+    // Use local time conversion to avoid timezone offsets messing up the date
+    const fromStr = formatDateToInput(fromDate);
+    const toStr = formatDateToInput(toDate);
 
     const currentUser = localStorage.getItem("NV_TEN") || ""; 
 
@@ -602,14 +675,16 @@ function filterData() {
 
         // Text & Date filter
         const textMatch = (r.SERI||'').toLowerCase().includes(k) || (r.NAME||'').toLowerCase().includes(k) || (r.SDTKHACH && r.SDTKHACH.includes(k));
-        let dateMatch = true;
-        if(fromVal || toVal) {
-            const rDateISO = convertToISO(r.DATE); 
-            if(rDateISO) {
-                if(fromVal && rDateISO < fromVal) dateMatch = false;
-                if(toVal && rDateISO > toVal) dateMatch = false;
-            } else if (!r.DATE && (fromVal || toVal)) dateMatch = false;
+        let dateMatch = false; 
+        
+        if (r.DATE) {
+            const rDateISO = convertToISO(r.DATE);
+            // Check if within range
+            if (rDateISO >= fromStr && rDateISO <= toStr) {
+                dateMatch = true;
+            }
         }
+        
         return textMatch && dateMatch;
     });
 
@@ -658,6 +733,7 @@ function renderTable(data) {
                     <div class="font-bold text-red-600 font-mono">${formatMoney(row.GIABAN)}</div>
                     <div class="text-xs text-gray-500">${row.SDTKHACH || 'Khách lẻ'}</div>
                 </div>
+                <div class="text-xs text-green-600 font-bold mt-1 text-right">BH: ${row.BAOHANH || '-'} <span class="text-blue-700 ml-1">(${row.BAOTEST || '-'})</span></div>
             </div>
         `;
 
@@ -686,7 +762,10 @@ function renderTable(data) {
                 <div class="text-[10px] text-gray-400 mt-0.5 uppercase">Sale: ${row.SALE || '-'}</div>
             </td>
             
-            <td class="p-4 text-center hidden md:table-cell text-xs font-bold text-green-600">${row.BAOHANH || '-'}</td>
+            <td class="p-4 text-center hidden md:table-cell">
+                <div class="text-[10px] text-blue-700 font-bold mb-1">${row.BAOTEST || '-'}</div>
+                <div class="text-xs font-bold text-green-600">${row.BAOHANH || '-'}</div>
+            </td>
             
             <td class="p-4 text-right align-top hidden md:table-cell">
                 <div class="font-mono font-bold text-red-600">${formatMoney(row.GIABAN)}</div>
@@ -822,7 +901,9 @@ async function printWarranty(seri) {
     setVal('print_prodIMEI', row.SERI);
     setVal('print_prodCond', `${row.TINHTRANG || ''} ${row.PIN ? '- Pin '+row.PIN+'%' : ''}`.trim());
     setVal('print_custPhone', row.SDTKHACH ? row.SDTKHACH.replace(/'/g, '') : '');
-    setVal('print_war1doi1', row.BAOTEST || '');
+    
+    // UPDATED MAPPING
+    setVal('print_baotest', row.BAOTEST || '');
     setVal('print_warRepair', row.BAOHANH || '');
 
     if(row.SDTKHACH) {
@@ -862,8 +943,10 @@ function updatePrintPreview() {
     setTxt('prev_page2IMEI', getTxt('print_prodIMEI'));
     setTxt('prev_prodAcc', getTxt('print_prodAcc'));
     setTxt('prev_prodCond', getTxt('print_prodCond'));
-    setTxt('prev_war1doi1', getTxt('print_war1doi1'));
+    
+    setTxt('prev_baotest', getTxt('print_baotest'));
     setTxt('prev_warRepair', getTxt('print_warRepair'));
+    
     setTxt('prev_warBattery', getTxt('print_warBattery'));
     setTxt('prev_gift', getTxt('print_gift'));
     setTxt('prev_notes', getTxt('print_notes'));

@@ -45,12 +45,22 @@
       </div>
     </div>
     
-    <!-- Toolbar: Chỉ còn Tìm kiếm & Refresh -->
+    <!-- Toolbar: Tìm kiếm, Lọc Loại & Refresh -->
     <div class="flex flex-col md:flex-row gap-3 items-center">
+        <!-- Bộ lọc Loại -->
+        <div class="w-full md:w-48">
+            <select id="filterType" class="w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all shadow-sm bg-white text-gray-700 font-medium">
+                <option value="">-- Tất cả loại --</option>
+            </select>
+        </div>
+
+        <!-- Tìm kiếm -->
         <div class="relative flex-1 w-full">
             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
             <input id="searchInput" type="text" placeholder="Tìm tên phụ kiện..." class="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all shadow-sm" />
         </div>
+        
+        <!-- Nút Refresh -->
         <div class="flex gap-2">
             <button onclick="loadData()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-600" title="Tải lại dữ liệu"><i class="fa-solid fa-rotate"></i></button>
         </div>
@@ -100,8 +110,8 @@
             
             <div class="bg-orange-50 p-3 rounded border border-orange-100">
                 <label class="block text-xs font-bold text-orange-800 mb-1">LẤY HÀNG TỪ KHO?</label>
+                <!-- CHỈNH SỬA: Bỏ Kho Tổng, chỉ còn CN1 và CN2 -->
                 <select id="atc_from" class="w-full border border-orange-300 rounded p-2 font-bold text-orange-900 bg-white" onchange="updateAtcAvail()">
-                    <option value="KHO">🏠 KHO TỔNG</option>
                     <option value="CN1">🏢 CHI NHÁNH 1</option>
                     <option value="CN2">🏢 CHI NHÁNH 2</option>
                 </select>
@@ -162,7 +172,10 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nhân Viên Sale</label>
-                            <input type="text" id="pay_sale" class="w-full border p-2 rounded text-sm font-bold text-indigo-700">
+                            <!-- CHỈNH SỬA: Chuyển Input sang Select -->
+                            <select id="pay_sale" class="w-full border p-2 rounded text-sm font-bold text-indigo-700 bg-white">
+                                <!-- Options sẽ được load từ JS -->
+                            </select>
                         </div>
                     </div>
 
@@ -214,6 +227,13 @@
 // ==========================================
 // ⚠️ Thay link Web App Backend (Code.gs) vào đây
 const API_URL = 'https://script.google.com/macros/s/AKfycbz0wygOHQKBXHIRQvUMnyE0GygUKwVfovJu6dxRzIOYdBukyB-k7JGO3xRtzqfUxN8W/exec'; 
+
+// ==========================================
+// 🟢 CẤU HÌNH NHÂN VIÊN (Lấy từ localStorage)
+// ==========================================
+// Lấy NV_TEN từ LocalStorage (được set lúc đăng nhập)
+const NV_TEN = localStorage.getItem("NV_TEN") || "NV_Mới";
+const STAFF_LIST = [NV_TEN, "SHOP"]; 
 // ==========================================
 
 let allData = [];
@@ -223,6 +243,32 @@ const qs = (s) => document.querySelector(s);
 const formatMoney = (n) => n ? Number(String(n).replace(/\D/g, '')).toLocaleString('vi-VN') : '0';
 const parseMoney = (n) => n ? Number(String(n).replace(/\D/g, '')) : 0;
 function formatCurrency(input) { let val = input.value.replace(/\D/g, ''); input.value = val ? Number(val).toLocaleString('vi-VN') : ''; }
+
+// === INIT ===
+function init() {
+    // Populate Staff Dropdown
+    const saleSelect = qs('#pay_sale');
+    saleSelect.innerHTML = STAFF_LIST.map(name => `<option value="${name}">${name}</option>`).join('');
+    
+    // Search & Filter listener
+    qs('#searchInput').addEventListener('input', filterAndRender);
+    qs('#filterType').addEventListener('change', filterAndRender);
+
+    loadData();
+}
+
+// === FILTER FUNCTION ===
+function filterAndRender() {
+    const k = qs('#searchInput').value.toLowerCase();
+    const type = qs('#filterType').value;
+    
+    const f = allData.filter(i => {
+        const matchName = i.NAME.toLowerCase().includes(k) || i.SKU.toLowerCase().includes(k);
+        const matchType = type === "" || (i.TYPE && i.TYPE === type);
+        return matchName && matchType;
+    });
+    renderTable(f);
+}
 
 // === LOAD DATA ===
 async function loadData() {
@@ -236,7 +282,18 @@ async function loadData() {
         const json = await res.json();
         if(json.success) {
             allData = json.data;
-            renderTable(allData);
+            
+            // Populate Filter Types (Lấy danh sách loại duy nhất)
+            const uniqueTypes = [...new Set(allData.map(item => item.TYPE).filter(Boolean))].sort();
+            const typeSelect = qs('#filterType');
+            const currentVal = typeSelect.value; // Giữ giá trị đang chọn nếu có refresh
+            
+            typeSelect.innerHTML = '<option value="">-- Tất cả loại --</option>' + 
+                                   uniqueTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+            
+            if(uniqueTypes.includes(currentVal)) typeSelect.value = currentVal;
+
+            filterAndRender(); // Render lần đầu
         } else {
             alert(json.message);
         }
@@ -310,7 +367,9 @@ function openAddToCart(sku) {
     qs('#atc_name').innerText = item.NAME;
     qs('#atc_price').value = formatMoney(item.PRICE);
     qs('#atc_qty').value = 1;
-    qs('#atc_from').value = 'KHO';
+    
+    // CHỈNH SỬA: Mặc định chọn CN1 thay vì KHO
+    qs('#atc_from').value = 'CN1';
     updateAtcAvail();
 }
 
@@ -324,8 +383,9 @@ function updateAtcAvail() {
     const sku = qs('#atc_sku').value;
     const from = qs('#atc_from').value;
     const item = allData.find(i => i.SKU === sku);
+    // Vẫn giữ logic lấy qty, mặc dù 'KHO' đã bị ẩn khỏi dropdown, nhưng code vẫn an toàn
     const map = {'KHO': item.QTY_KHO, 'CN1': item.QTY_CN1, 'CN2': item.QTY_CN2};
-    qs('#atc_avail').innerText = map[from];
+    qs('#atc_avail').innerText = map[from] || 0;
 }
 
 function confirmAddToCart() {
@@ -428,7 +488,7 @@ async function processCheckout() {
         customer: {
             PHONE: qs('#pay_phone').value.trim(),
             NAME: qs('#pay_name').value.trim(),
-            SALE: qs('#pay_sale').value.trim(),
+            SALE: qs('#pay_sale').value.trim(), // Lấy giá trị từ dropdown
             BAOTEST: qs('#pay_baotest').value.trim(),
             BAOHANH: qs('#pay_baohanh').value.trim(),
             PTTT: qs('#pay_method').value,
@@ -468,14 +528,8 @@ async function processCheckout() {
     }
 }
 
-// Init
-qs('#searchInput').addEventListener('input', (e) => {
-    const k = e.target.value.toLowerCase();
-    const f = allData.filter(i => i.NAME.toLowerCase().includes(k) || i.SKU.toLowerCase().includes(k));
-    renderTable(f);
-});
-
-loadData();
+// Start
+init();
 </script>
 </body>
 </html>

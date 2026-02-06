@@ -12,7 +12,6 @@
     ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
     .modal-open { opacity: 1; transform: scale(1); pointer-events: auto; }
     .modal-hide { opacity: 0; transform: scale(0.95); pointer-events: none; }
-    /* Animation cho badge tiền */
     .money-badge { transition: all 0.3s; }
     .money-badge:hover { transform: scale(1.05); }
   </style>
@@ -29,8 +28,9 @@
       <p class="text-slate-500 text-xs mt-1">Hệ thống quản lý thông tin & lịch sử mua hàng</p>
     </div>
     <div class="text-right">
+      <div id="nvDisplay" class="font-bold text-blue-600 mb-1">NV: ---</div>
       <div id="totalCount" class="text-3xl font-bold text-slate-800">0</div>
-      <div class="text-xs text-slate-500">Khách hàng</div>
+      <div class="text-xs text-slate-500">Khách hàng của bạn</div>
     </div>
   </div>
 
@@ -63,14 +63,13 @@
           <th class="p-4 font-semibold w-32">SĐT</th>
           <th class="p-4 font-semibold w-48">HỌ TÊN</th>
           <th class="p-4 font-semibold">ĐỊA CHỈ</th>
-          <th class="p-4 font-semibold w-32 text-right">TỔNG MUA</th> <!-- Cột Mới -->
-          <th class="p-4 font-semibold w-32">CCCD</th>
+          <th class="p-4 font-semibold w-32 text-right">TỔNG MUA</th> 
+          <th class="p-4 font-semibold w-32">SALE</th>
           <th class="p-4 font-semibold w-24">SOCIAL</th>
           <th class="p-4 font-semibold w-24 text-center">HÀNH ĐỘNG</th>
         </tr>
       </thead>
       <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
-        <!-- Rows rendered here -->
       </tbody>
     </table>
   </div>
@@ -78,13 +77,13 @@
 
 <!-- Modal Form -->
 <div id="modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm">
-  <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden transform transition-all duration-200 scale-95" id="modalContent">
-    <div class="bg-blue-600 p-4 flex justify-between items-center text-white">
+  <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden transform transition-all duration-200 scale-95 flex flex-col max-h-[90vh]" id="modalContent">
+    <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
         <h2 id="modalTitle" class="text-lg font-bold"><i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng</h2>
         <button onclick="closeModal()" class="hover:text-red-200 text-xl font-bold w-8 h-8 rounded-full hover:bg-blue-700 transition flex items-center justify-center">&times;</button>
     </div>
     
-    <div class="p-6 space-y-4">
+    <div class="p-6 space-y-4 overflow-y-auto">
         <input type="hidden" id="sdt_key">
 
         <div class="grid grid-cols-2 gap-4">
@@ -113,9 +112,53 @@
                 <input type="text" id="inp_social" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-blue-600" placeholder="Facebook/Zalo">
             </div>
         </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">NGƯỜI QUẢN LÝ (SALE) <span class="text-red-500">*</span></label>
+            <select id="inp_sale" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700 bg-slate-50"></select>
+        </div>
+
+        <!-- ẢNH CCCD -->
+        <div>
+            <label class="block text-xs font-bold text-slate-600 mb-2"><i class="fa-solid fa-camera"></i> HÌNH ẢNH CCCD (2 MẶT)</label>
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Mặt trước -->
+                <div class="relative group">
+                    <input type="file" id="file_cccd1" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'preview_cccd1', 'val_cccd1')">
+                    <div onclick="document.getElementById('file_cccd1').click()" 
+                         class="border-2 border-dashed border-slate-300 rounded-lg h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition relative overflow-hidden bg-white">
+                        <img id="preview_cccd1" class="hidden w-full h-full object-cover">
+                        <div id="placeholder_cccd1" class="text-center text-slate-400">
+                            <i class="fa-solid fa-id-card text-2xl mb-1"></i>
+                            <div class="text-[10px] font-bold">MẶT TRƯỚC</div>
+                        </div>
+                    </div>
+                    <button onclick="clearImage('preview_cccd1', 'val_cccd1', 'file_cccd1', 'placeholder_cccd1')" 
+                            class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md z-10" id="btn_clear_cccd1">&times;</button>
+                    <input type="hidden" id="val_cccd1">
+                </div>
+
+                <!-- Mặt sau -->
+                <div class="relative group">
+                    <input type="file" id="file_cccd2" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'preview_cccd2', 'val_cccd2')">
+                    <div onclick="document.getElementById('file_cccd2').click()" 
+                         class="border-2 border-dashed border-slate-300 rounded-lg h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition relative overflow-hidden bg-white">
+                        <img id="preview_cccd2" class="hidden w-full h-full object-cover">
+                        <div id="placeholder_cccd2" class="text-center text-slate-400">
+                            <i class="fa-regular fa-id-card text-2xl mb-1"></i>
+                            <div class="text-[10px] font-bold">MẶT SAU</div>
+                        </div>
+                    </div>
+                    <button onclick="clearImage('preview_cccd2', 'val_cccd2', 'file_cccd2', 'placeholder_cccd2')" 
+                            class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md z-10" id="btn_clear_cccd2">&times;</button>
+                    <input type="hidden" id="val_cccd2">
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="p-4 bg-slate-50 flex justify-end gap-3 border-t">
+    <div class="p-4 bg-slate-50 flex justify-end gap-3 border-t shrink-0">
         <button onclick="closeModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition">Hủy</button>
         <button id="btnSave" onclick="saveCustomer()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg font-bold flex items-center gap-2 transition transform active:scale-95">
             <i class="fa-solid fa-save"></i> Lưu Hồ Sơ
@@ -126,8 +169,9 @@
 
 <script>
 // ================= CONFIG =================
-// Thay link Web App của CustomerCode.gs vào đây
-const API_URL = 'https://script.google.com/macros/s/AKfycbxaQRGkc1Fe1Dn_RZynt5zF0S03pTdHs2pr-EvvQdrvRApQtFZ-MA0HIIJ07zC_oI8_DQ/exec'; 
+const API_URL = 'https://script.google.com/macros/s/AKfycbxwYP6GCQtbVMjBBx3ASMlWUvImhL3xjCDv8LPkDnNSME_iqNjB4-pIeQa2gAkx2Nz2MA/exec'; 
+const NV_TEN = localStorage.getItem('NV_TEN') || "NV_KD_01"; 
+document.getElementById('nvDisplay').innerText = `NV: ${NV_TEN}`;
 // ==========================================
 
 let allData = [];
@@ -138,9 +182,60 @@ const getVal = (id) => document.getElementById(id).value;
 const setVal = (id, val) => document.getElementById(id).value = val;
 const formatMoney = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
+// --- IMAGE HANDLING ---
+function handleImageUpload(input, previewId, valueId) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        // Resize ảnh về width 800px, chất lượng 70% để nhẹ
+        resizeImage(file, 800, 0.7).then(base64 => {
+            document.getElementById(valueId).value = base64;
+            const img = document.getElementById(previewId);
+            img.src = base64;
+            img.classList.remove('hidden');
+            document.getElementById(previewId.replace('preview_', 'placeholder_')).classList.add('hidden');
+            document.getElementById(previewId.replace('preview_', 'btn_clear_')).classList.remove('hidden');
+        });
+    }
+}
+
+function clearImage(previewId, valueId, fileId, placeholderId) {
+    document.getElementById(valueId).value = '';
+    document.getElementById(fileId).value = '';
+    const img = document.getElementById(previewId);
+    img.src = '';
+    img.classList.add('hidden');
+    document.getElementById(placeholderId).classList.remove('hidden');
+    document.getElementById(previewId.replace('preview_', 'btn_clear_')).classList.add('hidden');
+    event.stopPropagation();
+}
+
+function resizeImage(file, maxWidth, quality) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = new Image();
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > maxWidth) {
+                    height *= maxWidth / width;
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL(file.type, quality));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 // --- API FETCH HELPER ---
 async function fetchData(bodyData = null) {
-    if(API_URL.includes('YOUR_CUSTOMER')) { alert("Chưa cấu hình API URL!"); return null; }
     try {
         const options = {
             method: bodyData ? 'POST' : 'GET',
@@ -151,10 +246,8 @@ async function fetchData(bodyData = null) {
         
         if(bodyData) {
              const fallbackOptions = { ...options, mode: 'no-cors' };
-             const p1 = fetch(API_URL, options);
-             const p2 = new Promise(r => setTimeout(() => r('timeout'), 5000));
              try {
-                 const res = await p1;
+                 const res = await fetch(API_URL, options);
                  if(!res.ok) throw new Error(res.status);
                  return await res.json();
              } catch(e) {
@@ -177,8 +270,8 @@ async function loadData() {
     qs('#loading').classList.remove('hidden');
     const data = await fetchData();
     if(data) {
-        // Sắp xếp khách hàng mua nhiều lên đầu
-        allData = data.sort((a, b) => b.TONGTIEN - a.TONGTIEN);
+        const myData = data.filter(r => r.SALE === NV_TEN);
+        allData = myData.sort((a, b) => b.TONGTIEN - a.TONGTIEN);
         renderTable(allData);
         qs('#totalCount').innerText = allData.length;
     }
@@ -186,49 +279,25 @@ async function loadData() {
 }
 
 function renderTable(data) {
-    const tbody = qs('#tableBody');
-    tbody.innerHTML = '';
-    
-    if(data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">Chưa có dữ liệu</td></tr>`;
-        return;
-    }
+    const tbody = qs('#tableBody'); tbody.innerHTML = '';
+    if(data.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">Chưa có khách hàng nào</td></tr>`; return; }
 
     data.forEach((row, i) => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-blue-50 border-b border-slate-100 transition-colors group";
-        
-        // Link Social
-        let socialDisplay = '-';
-        if(row.SOCIAL) {
-            socialDisplay = `<a href="${row.SOCIAL.startsWith('http') ? row.SOCIAL : '#'}" target="_blank" class="text-blue-500 hover:text-blue-700 hover:underline flex items-center gap-1 justify-center w-8 h-8 bg-blue-50 rounded-full"><i class="fa-solid fa-link"></i></a>`;
-        }
-
-        // Style cho Tổng tiền
-        let moneyClass = 'text-slate-500 font-medium'; // Mặc định
-        if (row.TONGTIEN > 100000000) moneyClass = 'text-purple-600 font-bold bg-purple-50 px-2 py-1 rounded-lg money-badge inline-block'; // VIP > 100tr
-        else if (row.TONGTIEN > 20000000) moneyClass = 'text-green-600 font-bold'; // > 20tr
+        let socialDisplay = row.SOCIAL ? `<a href="${row.SOCIAL}" target="_blank" class="text-blue-500 hover:text-blue-700 w-8 h-8 flex items-center justify-center bg-blue-50 rounded-full"><i class="fa-solid fa-link"></i></a>` : '-';
+        let moneyClass = row.TONGTIEN > 100000000 ? 'text-purple-600 font-bold bg-purple-50 px-2 py-1 rounded money-badge' : (row.TONGTIEN > 20000000 ? 'text-green-600 font-bold' : 'text-slate-500 font-medium');
+        let saleBadge = row.SALE === 'SHOP' ? `<span class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-xs font-bold">SHOP</span>` : `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">${row.SALE}</span>`;
 
         tr.innerHTML = `
             <td class="p-4 text-center text-slate-400 text-xs">${i + 1}</td>
             <td class="p-4 font-mono font-bold text-slate-700 select-all">${row.SDT}</td>
             <td class="p-4 font-semibold text-blue-900">${row.TEN}</td>
-            <td class="p-4 text-slate-600 truncate max-w-[200px]" title="${row.DIACHI}">${row.DIACHI || '-'}</td>
-            
-            <!-- CỘT TỔNG TIỀN MỚI -->
-            <td class="p-4 text-right">
-                <span class="${moneyClass}">${row.TONGTIEN > 0 ? formatMoney(row.TONGTIEN) : '-'}</span>
-            </td>
-            
-            <td class="p-4 font-mono text-slate-500">${row.CCCD || '-'}</td>
+            <td class="p-4 text-slate-600 truncate max-w-[150px]" title="${row.DIACHI}">${row.DIACHI || '-'}</td>
+            <td class="p-4 text-right"><span class="${moneyClass}">${row.TONGTIEN > 0 ? formatMoney(row.TONGTIEN) : '-'}</span></td>
+            <td class="p-4 text-center">${saleBadge}</td>
             <td class="p-4 text-center">${socialDisplay}</td>
-            <td class="p-4 text-center relative">
-  <button onclick="openActionMenu('${row.SDT}', '${row.TEN.replace(/'/g,'')}')"
-    class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition">
-    <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
-  </button>
-</td>
-
+            <td class="p-4 text-center"><button onclick="openActionMenu('${row.SDT}', '${row.TEN}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button></td>
         `;
         tbody.appendChild(tr);
     });
@@ -238,30 +307,40 @@ function renderTable(data) {
 function openModal(mode) {
     const m = qs('#modal'); m.classList.remove('modal-hide'); m.classList.add('modal-open');
     const mc = qs('#modalContent'); mc.classList.remove('scale-95'); mc.classList.add('scale-100');
+    const saleSelect = qs('#inp_sale');
+    saleSelect.innerHTML = `<option value="${NV_TEN}">${NV_TEN}</option><option value="SHOP">SHOP</option>`;
 
     if(mode === 'add') {
-        isEditing = false;
-        qs('#modalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng';
-        setVal('sdt_key', '');
-        setVal('inp_sdt', ''); setVal('inp_ten', ''); setVal('inp_diachi', '');
-        setVal('inp_cccd', ''); setVal('inp_social', '');
+        isEditing = false; qs('#modalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng';
+        setVal('sdt_key', ''); setVal('inp_sdt', ''); setVal('inp_ten', ''); setVal('inp_diachi', '');
+        setVal('inp_cccd', ''); setVal('inp_social', ''); saleSelect.value = NV_TEN;
+        // Reset ảnh
+        clearImage('preview_cccd1', 'val_cccd1', 'file_cccd1', 'placeholder_cccd1');
+        clearImage('preview_cccd2', 'val_cccd2', 'file_cccd2', 'placeholder_cccd2');
     }
 }
 
 function openEdit(sdt) {
-    const item = allData.find(r => r.SDT == sdt);
-    if(!item) return;
+    const item = allData.find(r => r.SDT == sdt); if(!item) return;
+    openModal(); isEditing = true; qs('#modalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Sửa Thông Tin';
+    setVal('sdt_key', item.SDT); setVal('inp_sdt', item.SDT.replace(/'/g, ''));
+    setVal('inp_ten', item.TEN); setVal('inp_diachi', item.DIACHI);
+    setVal('inp_cccd', item.CCCD ? item.CCCD.replace(/'/g, '') : ''); setVal('inp_social', item.SOCIAL);
     
-    openModal();
-    isEditing = true;
-    qs('#modalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Sửa Thông Tin';
-    
-    setVal('sdt_key', item.SDT);
-    setVal('inp_sdt', item.SDT.replace(/'/g, '')); // Bỏ dấu ' khi hiển thị
-    setVal('inp_ten', item.TEN);
-    setVal('inp_diachi', item.DIACHI);
-    setVal('inp_cccd', item.CCCD ? item.CCCD.replace(/'/g, '') : '');
-    setVal('inp_social', item.SOCIAL);
+    // Set ảnh nếu có
+    if(item.CCCD1) {
+        setVal('val_cccd1', item.CCCD1); qs('#preview_cccd1').src = item.CCCD1;
+        qs('#preview_cccd1').classList.remove('hidden'); qs('#placeholder_cccd1').classList.add('hidden'); qs('#btn_clear_cccd1').classList.remove('hidden');
+    } else clearImage('preview_cccd1', 'val_cccd1', 'file_cccd1', 'placeholder_cccd1');
+
+    if(item.CCCD2) {
+        setVal('val_cccd2', item.CCCD2); qs('#preview_cccd2').src = item.CCCD2;
+        qs('#preview_cccd2').classList.remove('hidden'); qs('#placeholder_cccd2').classList.add('hidden'); qs('#btn_clear_cccd2').classList.remove('hidden');
+    } else clearImage('preview_cccd2', 'val_cccd2', 'file_cccd2', 'placeholder_cccd2');
+
+    const saleSelect = qs('#inp_sale');
+    if(item.SALE && item.SALE !== NV_TEN && item.SALE !== 'SHOP') { const opt = document.createElement('option'); opt.value = item.SALE; opt.text = item.SALE; saleSelect.add(opt); }
+    saleSelect.value = item.SALE || NV_TEN;
 }
 
 function closeModal() {
@@ -270,139 +349,55 @@ function closeModal() {
 }
 
 async function saveCustomer() {
-    const rawSdt = getVal('inp_sdt').trim();
-    const ten = getVal('inp_ten').trim();
-    const rawCccd = getVal('inp_cccd').trim();
+    const btn = qs('#btnSave'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
     
-    if(!rawSdt || !ten) return alert("Vui lòng nhập SĐT và Tên!");
-
-    // Auto thêm dấu ' vào sdt/cccd để giữ số 0
-    const sdtForSheet = rawSdt.startsWith("'") ? rawSdt : "'" + rawSdt;
-    let cccdForSheet = rawCccd;
-    if (rawCccd && !rawCccd.startsWith("'")) cccdForSheet = "'" + rawCccd;
+    const rawSdt = getVal('inp_sdt').trim(); const ten = getVal('inp_ten').trim();
+    if(!rawSdt || !ten) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Lưu Hồ Sơ'; return alert("Thiếu SĐT hoặc Tên!"); }
 
     const item = {
-        SDT: sdtForSheet, // Lưu có dấu '
-        TEN: ten,
-        DIACHI: getVal('inp_diachi'),
-        CCCD: cccdForSheet,
-        SOCIAL: getVal('inp_social'),
-        TONGTIEN: 0 // Mới tạo chưa có tiền
+        SDT: "'" + rawSdt, TEN: ten, DIACHI: getVal('inp_diachi'), CCCD: "'" + getVal('inp_cccd'),
+        SOCIAL: getVal('inp_social'), SALE: getVal('inp_sale'),
+        CCCD1: getVal('val_cccd1'), CCCD2: getVal('val_cccd2'), // Thêm 2 trường ảnh
+        TONGTIEN: 0 
     };
 
-    const action = isEditing ? 'edit' : 'add';
-    const body = { action, ...item };
-    if(isEditing) {
-        body.SDT_KEY = getVal('sdt_key');
-        // Giữ lại tổng tiền cũ nếu đang sửa
-        const oldItem = allData.find(r => r.SDT == body.SDT_KEY);
-        if(oldItem) item.TONGTIEN = oldItem.TONGTIEN;
-    }
+    const action = isEditing ? 'edit' : 'add'; const body = { action, ...item };
+    if(isEditing) body.SDT_KEY = getVal('sdt_key');
 
-    // Optimistic Update
-    const oldData = [...allData];
-    if(isEditing) {
-        const idx = allData.findIndex(r => r.SDT == body.SDT_KEY);
-        if(idx !== -1) allData[idx] = item;
-    } else {
-        allData.unshift(item); // Thêm lên đầu
-    }
-    renderTable(allData);
-    qs('#totalCount').innerText = allData.length;
-    closeModal();
-
-    const res = await fetchData(body);
-    if(res && !res.success) {
-        alert("Lỗi: " + res.message);
-        allData = oldData; renderTable(allData);
-    }
+    try {
+        const res = await fetchData(body);
+        if(res && res.success) {
+            closeModal(); loadData();
+        } else alert("Lỗi: " + (res ? res.message : 'Unknown'));
+    } catch(e) { alert("Lỗi: " + e.message); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Lưu Hồ Sơ'; }
 }
 
 async function delCustomer(sdt) {
-    if(!confirm("Xóa khách hàng: " + sdt + "?")) return;
-    const oldData = [...allData];
-    allData = allData.filter(r => r.SDT != sdt);
-    renderTable(allData);
-    qs('#totalCount').innerText = allData.length;
-
+    if(!confirm("Xóa khách hàng này?")) return;
     const res = await fetchData({ action: 'delete', SDT: sdt });
-    if(res && !res.success) {
-        alert("Xóa thất bại: " + res.message);
-        allData = oldData; renderTable(allData);
-    }
+    if(res && res.success) loadData(); else alert("Lỗi xóa!");
 }
 
 qs('#searchInput').addEventListener('input', (e) => {
     const k = e.target.value.toLowerCase();
-    const f = allData.filter(r => 
-        r.SDT.toLowerCase().includes(k) || 
-        r.TEN.toLowerCase().includes(k) ||
-        (r.CCCD && r.CCCD.toLowerCase().includes(k))
-    );
-    renderTable(f);
+    renderTable(allData.filter(r => r.SDT.toLowerCase().includes(k) || r.TEN.toLowerCase().includes(k)));
 });
 
 loadData();
 let currentSDT = '';
-
-function openActionMenu(sdt, name) {
-  currentSDT = sdt;
-  qs('#as_name').innerText = name;
-  qs('#as_sdt').innerText = sdt.replace(/'/g, '');
-
-  const sheet = qs('#actionSheet');
-  sheet.classList.remove('hidden');
-
-  setTimeout(() => {
-    sheet.children[0].classList.remove('translate-y-full');
-  }, 10);
-
-  sheet.onclick = (e) => {
-    if (e.target === sheet) closeActionMenu();
-  };
-}
-
-function closeActionMenu() {
-  const sheet = qs('#actionSheet');
-  sheet.children[0].classList.add('translate-y-full');
-  setTimeout(() => sheet.classList.add('hidden'), 200);
-}
-
-function triggerAction(action) {
-  closeActionMenu();
-
-  if (action === 'edit') openEdit(currentSDT);
-  if (action === 'delete') delCustomer(currentSDT);
-}
-
+function openActionMenu(sdt, name) { currentSDT = sdt; qs('#as_name').innerText = name; qs('#as_sdt').innerText = sdt; qs('#actionSheet').classList.remove('hidden'); setTimeout(()=>qs('#actionSheet').children[0].classList.remove('translate-y-full'),10); }
+function closeActionMenu() { qs('#actionSheet').children[0].classList.add('translate-y-full'); setTimeout(()=>qs('#actionSheet').classList.add('hidden'),200); }
+function triggerAction(action) { closeActionMenu(); if(action === 'edit') openEdit(currentSDT); if(action === 'delete') delCustomer(currentSDT); }
+qs('#actionSheet').onclick = (e) => { if(e.target === qs('#actionSheet')) closeActionMenu(); };
 </script>
-<!-- ACTION MENU -->
+
 <div id="actionSheet" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end justify-center">
   <div class="bg-white w-full max-w-md rounded-t-2xl shadow-2xl p-4 translate-y-full transition-transform duration-300">
-    
-    <div class="text-center mb-3">
-      <div id="as_name" class="font-bold text-slate-800"></div>
-      <div id="as_sdt" class="text-xs text-slate-500"></div>
-    </div>
-
-    <div class="space-y-2">
-      <button onclick="triggerAction('edit')"
-        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 transition">
-        <i class="fa-solid fa-pen text-blue-600"></i> Sửa thông tin
-      </button>
-
-      <button onclick="triggerAction('delete')"
-        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition">
-        <i class="fa-solid fa-trash"></i> Xóa khách hàng
-      </button>
-    </div>
-
-    <button onclick="closeActionMenu()"
-      class="mt-4 w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-medium">
-      Đóng
-    </button>
+    <div class="text-center mb-3"><div id="as_name" class="font-bold text-slate-800"></div><div id="as_sdt" class="text-xs text-slate-500"></div></div>
+    <div class="space-y-2"><button onclick="triggerAction('edit')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 transition"><i class="fa-solid fa-pen text-blue-600"></i> Sửa thông tin</button></div>
+    <button onclick="closeActionMenu()" class="mt-4 w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-medium">Đóng</button>
   </div>
 </div>
-
 </body>
 </html>
