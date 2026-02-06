@@ -288,18 +288,20 @@
     </div>
 </div>
 
-<!-- Action Menu (Mobile) -->
-<div id="actionSheet" class="fixed inset-0 bg-black/50 z-[80] hidden flex items-end justify-center" onclick="closeMenu()">
-    <div class="bg-white w-full max-w-md rounded-t-2xl overflow-hidden shadow-2xl pb-6" onclick="event.stopPropagation()">
+<!-- Action Menu (Mobile - Fixed & Optimized) -->
+<div id="actionSheet" class="fixed inset-0 bg-black/60 z-[80] flex items-end justify-center hidden" onclick="closeMenu()">
+    <div class="bg-white w-full max-w-md rounded-t-2xl shadow-2xl overflow-hidden transform translate-y-full transition-transform duration-200" id="actionSheetContent" onclick="event.stopPropagation()">
+        
+        <div class="bg-gray-100 p-4 text-center border-b font-bold text-gray-700 truncate" id="act_title">Thao Tác</div>
         <input type="hidden" id="act_id">
-        <div class="bg-gray-50 p-4 text-center font-bold text-gray-700 border-b flex justify-between items-center">
-            <span>Thao Tác</span>
-            <button onclick="closeMenu()" class="text-gray-400"><i class="fa-solid fa-times"></i></button>
+
+        <div class="p-4 space-y-3">
+             <button onclick="handleAction('print')" class="w-full py-3 bg-blue-50 text-blue-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-blue-100 active:scale-95 transition"><i class="fa-solid fa-print text-xl"></i> In Biên Nhận</button>
+             <button onclick="handleAction('edit')" class="w-full py-3 bg-orange-50 text-orange-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-orange-100 active:scale-95 transition"><i class="fa-solid fa-pen text-xl"></i> Sửa / Thanh Toán</button>
         </div>
-        <div class="p-4 space-y-3 pb-8">
-             <button onclick="handleAction('print')" class="w-full py-3.5 bg-blue-50 text-blue-700 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-95 transition"><i class="fa-solid fa-print text-xl"></i> In Biên Nhận</button>
-             <button onclick="handleAction('edit')" class="w-full py-3.5 bg-orange-50 text-orange-700 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-95 transition"><i class="fa-solid fa-pen text-xl"></i> Sửa / Thanh Toán</button>
-             <!-- ĐÃ BỎ NÚT XÓA -->
+
+        <div class="p-4 border-t bg-white pb-8 md:pb-4">
+            <button onclick="closeMenu()" class="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300">Đóng Menu</button>
         </div>
     </div>
 </div>
@@ -515,8 +517,22 @@ function openModal(mode) {
 }
 function closeModal() { qs('#modal').classList.remove('modal-open'); qs('#modal').classList.add('modal-hide'); setTimeout(() => qs('#modal').classList.add('hidden'), 200); }
 
-function openMenu(id) { qs('#actionSheet').classList.remove('hidden'); qs('#act_id').value = id; }
-function closeMenu() { qs('#actionSheet').classList.add('hidden'); }
+function openMenu(id) { 
+    qs('#act_id').value = id;
+    const item = allData.find(i => i.ID == id);
+    qs('#act_title').innerText = item ? `${item.CUST_NAME} - ${item.DEVICE}` : 'Thao Tác';
+
+    const sheet = qs('#actionSheet');
+    sheet.classList.remove('hidden');
+    setTimeout(() => { sheet.querySelector('#actionSheetContent').classList.remove('translate-y-full'); }, 10);
+}
+
+function closeMenu() { 
+    const sheet = qs('#actionSheet');
+    const content = sheet.querySelector('#actionSheetContent');
+    content.classList.add('translate-y-full');
+    setTimeout(() => { sheet.classList.add('hidden'); }, 200);
+}
 
 function handleAction(type) {
     const id = qs('#act_id').value;
