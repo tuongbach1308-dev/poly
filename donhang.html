@@ -213,9 +213,10 @@
   </div>
 </div>
 
-<!-- MODAL ADD/EDIT -->
-<div id="modal" class="fixed inset-0 bg-black/60 z-40 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm no-print p-4 hidden">
-  <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transform transition-all duration-200 scale-95">
+<!-- MODAL ADD/EDIT (FULL SCREEN ON MOBILE) -->
+<div id="modal" class="fixed inset-0 bg-black/60 z-40 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm no-print hidden">
+  <!-- Thay đổi class: Full screen mobile (w-full h-full), Popup desktop (md:h-auto md:max-w-4xl) -->
+  <div class="bg-white w-full h-full md:h-auto md:max-w-4xl md:max-h-[90vh] md:rounded-2xl shadow-2xl flex flex-col overflow-hidden transform transition-all duration-200">
     <div class="bg-indigo-600 p-4 flex justify-between items-center text-white shrink-0">
         <h2 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-file-signature"></i> <span id="modalTitle">Thông Tin Đơn Hàng</span></h2>
         <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-indigo-500 transition text-white text-xl">&times;</button>
@@ -971,6 +972,33 @@ function updatePrintPreview() {
     }
 }
 
+// --- NEW FUNCTION: Auto Scale Print Preview ---
+function autoScalePrintPreview() {
+    const wrapper = qs('#preview-wrapper');
+    const container = qs('#print-preview');
+    if (!wrapper || !container) return;
+
+    // Chỉ scale nếu màn hình nhỏ (Mobile)
+    if (window.innerWidth < 768) {
+        // Chiều rộng gốc của A4 (210mm) xấp xỉ 800px trong CSS
+        const originalWidth = 800; 
+        // Trừ padding của container (32px = p-4 * 2)
+        const availableWidth = container.offsetWidth - 32; 
+        
+        const scale = availableWidth / originalWidth;
+        // Giới hạn scale tối đa là 1
+        const finalScale = Math.min(scale, 1);
+        
+        wrapper.style.transform = `scale(${finalScale})`;
+        wrapper.style.transformOrigin = 'top center'; // Hoặc 'top left' tùy sở thích
+        
+        // Điều chỉnh chiều cao của container cha để không bị khoảng trắng thừa quá nhiều
+        // (Optional: Nếu cần thiết)
+    } else {
+        wrapper.style.transform = 'none';
+    }
+}
+
 async function copyOrderReport(seri) {
     const row = allData.find(r => r.SERI === seri);
     if (!row) return;
@@ -1003,10 +1031,16 @@ function switchPrintTab(tabName) {
         editor.classList.add('hidden'); preview.classList.remove('hidden'); preview.classList.add('flex');
         bE.className = "flex-1 py-3 text-sm text-gray-500 font-medium hover:bg-gray-100";
         bP.className = "flex-1 py-3 text-sm font-bold text-indigo-700 border-b-2 border-indigo-700 bg-white";
+        
+        // Trigger auto scale immediately after showing
+        setTimeout(autoScalePrintPreview, 50);
     }
 }
 
 function closePrintModal() { qs('#printModal').classList.add('hidden'); qs('#printModal').classList.remove('flex'); }
+
+// Listen for resize
+window.addEventListener('resize', autoScalePrintPreview);
 
 loadData();
 </script>

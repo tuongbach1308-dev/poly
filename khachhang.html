@@ -6,7 +6,9 @@
   <title>Customer CRM - Quản Lý Khách Hàng</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
+    body { font-family: 'Roboto', sans-serif; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
@@ -16,125 +18,145 @@
     .money-badge:hover { transform: scale(1.05); }
   </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-sm font-sans text-slate-800">
+<body class="bg-slate-100 min-h-screen text-sm text-slate-800">
 
-<div class="p-4 max-w-[1400px] mx-auto">
+<div class="p-4 w-full max-w-[1400px] mx-auto pb-20">
   <!-- Header -->
-  <div class="flex justify-between items-center mb-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 bg-white p-5 rounded-xl shadow-sm border border-slate-200 gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-blue-700 flex items-center gap-2">
+      <h1 class="text-xl md:text-2xl font-bold text-blue-700 flex items-center gap-2">
           <i class="fa-solid fa-users-gear"></i> Customer CRM
       </h1>
       <p class="text-slate-500 text-xs mt-1">Hệ thống quản lý thông tin & lịch sử mua hàng</p>
     </div>
-    <div class="text-right">
-      <div id="nvDisplay" class="font-bold text-blue-600 mb-1">NV: ---</div>
-      <div id="totalCount" class="text-3xl font-bold text-slate-800">0</div>
-      <div class="text-xs text-slate-500">Khách hàng của bạn</div>
+    <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+      <div>
+          <div id="nvDisplay" class="font-bold text-blue-600 mb-1 text-right">NV: ---</div>
+          <div class="text-xs text-slate-500 text-right">Khách hàng của bạn</div>
+      </div>
+      <div class="text-right pl-4 border-l border-slate-100">
+          <div id="totalCount" class="text-3xl font-bold text-slate-800 leading-none">0</div>
+          <div class="text-[10px] uppercase font-bold text-slate-400">Hồ sơ</div>
+      </div>
     </div>
   </div>
 
   <!-- Toolbar -->
   <div class="flex flex-col md:flex-row gap-3 mb-4">
     <div class="relative flex-1">
-        <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400"></i>
+        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
         <input id="searchInput" type="text" placeholder="Tìm tên, SĐT, CCCD..."
-        class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
+        class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all" />
     </div>
-    <button onclick="loadData()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition font-medium">
-        <i class="fa-solid fa-rotate-right"></i> Tải lại
-    </button>
-    <button onclick="openModal('add')" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-bold flex items-center gap-2">
-        <i class="fa-solid fa-user-plus"></i> Thêm Khách
-    </button>
+    <div class="flex gap-2">
+        <button onclick="loadData()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2.5 rounded-lg hover:bg-slate-50 transition font-medium shadow-sm">
+            <i class="fa-solid fa-rotate-right"></i>
+        </button>
+        <button onclick="openModal('add')" class="flex-1 md:flex-none bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-md font-bold flex items-center justify-center gap-2 active:scale-95">
+            <i class="fa-solid fa-user-plus"></i> <span class="hidden md:inline">Thêm Khách</span><span class="md:hidden">Thêm Mới</span>
+        </button>
+    </div>
   </div>
 
-  <!-- Table -->
-  <div class="overflow-x-auto bg-white rounded-xl shadow border border-slate-200 min-h-[400px]">
+  <!-- Container Danh Sách -->
+  <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden relative min-h-[400px]">
     <div id="loading" class="hidden absolute inset-0 bg-white/80 z-50 flex flex-col items-center justify-center">
         <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600 mb-2"></i>
         <span class="text-slate-500 font-medium">Đang đồng bộ dữ liệu...</span>
     </div>
 
-    <table class="min-w-full text-left border-collapse">
-      <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase text-xs tracking-wider sticky top-0 z-10">
-        <tr>
-          <th class="p-4 font-semibold w-12 text-center">#</th>
-          <th class="p-4 font-semibold w-32">SĐT</th>
-          <th class="p-4 font-semibold w-48">HỌ TÊN</th>
-          <th class="p-4 font-semibold">ĐỊA CHỈ</th>
-          <th class="p-4 font-semibold w-32 text-right">TỔNG MUA</th> 
-          <th class="p-4 font-semibold w-32">SALE</th>
-          <th class="p-4 font-semibold w-24">SOCIAL</th>
-          <th class="p-4 font-semibold w-24 text-center">HÀNH ĐỘNG</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
-      </tbody>
-    </table>
+    <!-- TABLE CHO DESKTOP -->
+    <div class="overflow-x-auto hidden md:block">
+        <table class="min-w-full text-left border-collapse">
+          <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase text-xs tracking-wider sticky top-0 z-10">
+            <tr>
+              <th class="p-4 font-semibold w-12 text-center">#</th>
+              <th class="p-4 font-semibold w-32">SĐT</th>
+              <th class="p-4 font-semibold w-48">HỌ TÊN</th>
+              <th class="p-4 font-semibold">ĐỊA CHỈ</th>
+              <th class="p-4 font-semibold w-32 text-right">TỔNG MUA</th> 
+              <th class="p-4 font-semibold w-32">SALE</th>
+              <th class="p-4 font-semibold w-24">SOCIAL</th>
+              <th class="p-4 font-semibold w-24 text-center">HÀNH ĐỘNG</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+        </table>
+    </div>
+
+    <!-- LIST CARD CHO MOBILE -->
+    <div id="mobileList" class="md:hidden p-3 space-y-3 bg-slate-50 min-h-[400px]">
+        <!-- Cards will be injected here -->
+    </div>
   </div>
 </div>
 
-<!-- Modal Form -->
-<div id="modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm">
-  <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden transform transition-all duration-200 scale-95 flex flex-col max-h-[90vh]" id="modalContent">
-    <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
-        <h2 id="modalTitle" class="text-lg font-bold"><i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng</h2>
-        <button onclick="closeModal()" class="hover:text-red-200 text-xl font-bold w-8 h-8 rounded-full hover:bg-blue-700 transition flex items-center justify-center">&times;</button>
+<!-- Modal Form (Full Screen on Mobile) -->
+<div id="modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm hidden">
+  <!-- Thay đổi class để full màn hình trên mobile -->
+  <div class="bg-white w-full h-full md:h-auto md:max-w-lg md:max-h-[90vh] md:rounded-xl shadow-2xl overflow-hidden transform transition-all duration-200 flex flex-col" id="modalContent">
+    
+    <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0 shadow-md z-10">
+        <h2 id="modalTitle" class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng</h2>
+        <button onclick="closeModal()" class="hover:text-red-200 text-2xl w-8 h-8 rounded-full hover:bg-blue-700 transition flex items-center justify-center">&times;</button>
     </div>
     
-    <div class="p-6 space-y-4 overflow-y-auto">
+    <div class="p-5 space-y-4 overflow-y-auto flex-1 bg-slate-50">
         <input type="hidden" id="sdt_key">
 
-        <div class="grid grid-cols-2 gap-4">
-            <div class="col-span-1">
-                <label class="block text-xs font-bold text-slate-600 mb-1">SỐ ĐIỆN THOẠI <span class="text-red-500">*</span></label>
-                <input type="text" id="inp_sdt" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-blue-700 font-bold" placeholder="09xxxxxxx">
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">SỐ ĐIỆN THOẠI <span class="text-red-500">*</span></label>
+                    <input type="text" id="inp_sdt" class="w-full border border-slate-300 rounded p-2.5 focus:border-blue-500 outline-none font-mono text-blue-700 font-bold bg-blue-50/50" placeholder="09xxxxxxx">
+                </div>
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">HỌ VÀ TÊN <span class="text-red-500">*</span></label>
+                    <input type="text" id="inp_ten" class="w-full border border-slate-300 rounded p-2.5 focus:border-blue-500 outline-none capitalize" placeholder="Nguyễn Văn A">
+                </div>
             </div>
-            <div class="col-span-1">
-                <label class="block text-xs font-bold text-slate-600 mb-1">HỌ VÀ TÊN <span class="text-red-500">*</span></label>
-                <input type="text" id="inp_ten" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none capitalize" placeholder="Nguyễn Văn A">
+
+            <div class="mt-4">
+                <label class="block text-xs font-bold text-slate-500 mb-1">ĐỊA CHỈ</label>
+                <input type="text" id="inp_diachi" class="w-full border border-slate-300 rounded p-2.5 focus:border-blue-500 outline-none" placeholder="Số nhà, đường, quận/huyện...">
             </div>
         </div>
 
-        <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">ĐỊA CHỈ</label>
-            <input type="text" id="inp_diachi" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Số nhà, đường, quận/huyện...">
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1">CCCD / CMND</label>
-                <input type="text" id="inp_cccd" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono" placeholder="12 số">
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">CCCD / CMND</label>
+                    <input type="text" id="inp_cccd" class="w-full border border-slate-300 rounded p-2.5 focus:border-blue-500 outline-none font-mono" placeholder="12 số">
+                </div>
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">SOCIAL (Link)</label>
+                    <input type="text" id="inp_social" class="w-full border border-slate-300 rounded p-2.5 focus:border-blue-500 outline-none text-blue-600" placeholder="Facebook/Zalo">
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1">SOCIAL (Link)</label>
-                <input type="text" id="inp_social" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-blue-600" placeholder="Facebook/Zalo">
-            </div>
-        </div>
 
-        <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">NGƯỜI QUẢN LÝ (SALE) <span class="text-red-500">*</span></label>
-            <select id="inp_sale" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700 bg-slate-50"></select>
+            <div class="mt-4">
+                <label class="block text-xs font-bold text-slate-500 mb-1">NGƯỜI QUẢN LÝ (SALE) <span class="text-red-500">*</span></label>
+                <select id="inp_sale" class="w-full border border-slate-300 rounded p-2.5 focus:border-blue-500 outline-none font-bold text-slate-700 bg-white"></select>
+            </div>
         </div>
 
         <!-- ẢNH CCCD -->
-        <div>
-            <label class="block text-xs font-bold text-slate-600 mb-2"><i class="fa-solid fa-camera"></i> HÌNH ẢNH CCCD (2 MẶT)</label>
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+            <label class="block text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><i class="fa-solid fa-camera"></i> HÌNH ẢNH CCCD (2 MẶT)</label>
             <div class="grid grid-cols-2 gap-4">
                 <!-- Mặt trước -->
                 <div class="relative group">
                     <input type="file" id="file_cccd1" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'preview_cccd1', 'val_cccd1')">
                     <div onclick="document.getElementById('file_cccd1').click()" 
-                         class="border-2 border-dashed border-slate-300 rounded-lg h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition relative overflow-hidden bg-white">
-                        <img id="preview_cccd1" class="hidden w-full h-full object-cover">
+                         class="border-2 border-dashed border-slate-300 rounded-lg h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition relative overflow-hidden bg-slate-50">
+                        <img id="preview_cccd1" class="hidden w-full h-full object-contain bg-black">
                         <div id="placeholder_cccd1" class="text-center text-slate-400">
                             <i class="fa-solid fa-id-card text-2xl mb-1"></i>
                             <div class="text-[10px] font-bold">MẶT TRƯỚC</div>
                         </div>
                     </div>
                     <button onclick="clearImage('preview_cccd1', 'val_cccd1', 'file_cccd1', 'placeholder_cccd1')" 
-                            class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md z-10" id="btn_clear_cccd1">&times;</button>
+                            class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md z-10 hover:bg-red-600" id="btn_clear_cccd1">&times;</button>
                     <input type="hidden" id="val_cccd1">
                 </div>
 
@@ -142,15 +164,15 @@
                 <div class="relative group">
                     <input type="file" id="file_cccd2" accept="image/*" class="hidden" onchange="handleImageUpload(this, 'preview_cccd2', 'val_cccd2')">
                     <div onclick="document.getElementById('file_cccd2').click()" 
-                         class="border-2 border-dashed border-slate-300 rounded-lg h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition relative overflow-hidden bg-white">
-                        <img id="preview_cccd2" class="hidden w-full h-full object-cover">
+                         class="border-2 border-dashed border-slate-300 rounded-lg h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition relative overflow-hidden bg-slate-50">
+                        <img id="preview_cccd2" class="hidden w-full h-full object-contain bg-black">
                         <div id="placeholder_cccd2" class="text-center text-slate-400">
                             <i class="fa-regular fa-id-card text-2xl mb-1"></i>
                             <div class="text-[10px] font-bold">MẶT SAU</div>
                         </div>
                     </div>
                     <button onclick="clearImage('preview_cccd2', 'val_cccd2', 'file_cccd2', 'placeholder_cccd2')" 
-                            class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md z-10" id="btn_clear_cccd2">&times;</button>
+                            class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md z-10 hover:bg-red-600" id="btn_clear_cccd2">&times;</button>
                     <input type="hidden" id="val_cccd2">
                 </div>
             </div>
@@ -158,9 +180,9 @@
 
     </div>
 
-    <div class="p-4 bg-slate-50 flex justify-end gap-3 border-t shrink-0">
-        <button onclick="closeModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition">Hủy</button>
-        <button id="btnSave" onclick="saveCustomer()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg font-bold flex items-center gap-2 transition transform active:scale-95">
+    <div class="p-4 bg-white flex justify-end gap-3 border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 shrink-0">
+        <button onclick="closeModal()" class="flex-1 md:flex-none px-5 py-2.5 border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg font-bold transition">Hủy</button>
+        <button id="btnSave" onclick="saveCustomer()" class="flex-1 md:flex-none px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg font-bold flex items-center justify-center gap-2 transition transform active:scale-95">
             <i class="fa-solid fa-save"></i> Lưu Hồ Sơ
         </button>
     </div>
@@ -186,7 +208,6 @@ const formatMoney = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currenc
 function handleImageUpload(input, previewId, valueId) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        // Resize ảnh về width 800px, chất lượng 70% để nhẹ
         resizeImage(file, 800, 0.7).then(base64 => {
             document.getElementById(valueId).value = base64;
             const img = document.getElementById(previewId);
@@ -279,16 +300,27 @@ async function loadData() {
 }
 
 function renderTable(data) {
-    const tbody = qs('#tableBody'); tbody.innerHTML = '';
-    if(data.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">Chưa có khách hàng nào</td></tr>`; return; }
+    const tbody = qs('#tableBody'); 
+    const mobileList = qs('#mobileList');
+    
+    tbody.innerHTML = '';
+    mobileList.innerHTML = '';
+
+    if(data.length === 0) { 
+        const emptyMsg = `<div class="p-8 text-center text-slate-400 italic">Chưa có khách hàng nào</div>`;
+        tbody.innerHTML = `<tr><td colspan="8">${emptyMsg}</td></tr>`; 
+        mobileList.innerHTML = emptyMsg;
+        return; 
+    }
 
     data.forEach((row, i) => {
+        let socialDisplay = row.SOCIAL ? `<a href="${row.SOCIAL}" target="_blank" class="text-blue-500 hover:text-blue-700 w-8 h-8 flex items-center justify-center bg-blue-50 rounded-full"><i class="fa-solid fa-link"></i></a>` : '-';
+        let moneyClass = row.TONGTIEN > 100000000 ? 'text-purple-600 font-bold bg-purple-50 px-2 py-1 rounded money-badge border border-purple-100' : (row.TONGTIEN > 20000000 ? 'text-green-600 font-bold' : 'text-slate-500 font-medium');
+        let saleBadge = row.SALE === 'SHOP' ? `<span class="bg-slate-200 text-slate-600 px-2 py-1 rounded text-[10px] font-bold">SHOP</span>` : `<span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold border border-blue-100">${row.SALE}</span>`;
+
+        // Desktop Row
         const tr = document.createElement('tr');
         tr.className = "hover:bg-blue-50 border-b border-slate-100 transition-colors group";
-        let socialDisplay = row.SOCIAL ? `<a href="${row.SOCIAL}" target="_blank" class="text-blue-500 hover:text-blue-700 w-8 h-8 flex items-center justify-center bg-blue-50 rounded-full"><i class="fa-solid fa-link"></i></a>` : '-';
-        let moneyClass = row.TONGTIEN > 100000000 ? 'text-purple-600 font-bold bg-purple-50 px-2 py-1 rounded money-badge' : (row.TONGTIEN > 20000000 ? 'text-green-600 font-bold' : 'text-slate-500 font-medium');
-        let saleBadge = row.SALE === 'SHOP' ? `<span class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-xs font-bold">SHOP</span>` : `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">${row.SALE}</span>`;
-
         tr.innerHTML = `
             <td class="p-4 text-center text-slate-400 text-xs">${i + 1}</td>
             <td class="p-4 font-mono font-bold text-slate-700 select-all">${row.SDT}</td>
@@ -297,16 +329,48 @@ function renderTable(data) {
             <td class="p-4 text-right"><span class="${moneyClass}">${row.TONGTIEN > 0 ? formatMoney(row.TONGTIEN) : '-'}</span></td>
             <td class="p-4 text-center">${saleBadge}</td>
             <td class="p-4 text-center">${socialDisplay}</td>
-            <td class="p-4 text-center"><button onclick="openActionMenu('${row.SDT}', '${row.TEN}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button></td>
+            <td class="p-4 text-center"><button onclick="openActionMenu('${row.SDT}', '${row.TEN}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-100 transition"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button></td>
         `;
         tbody.appendChild(tr);
+
+        // Mobile Card
+        const card = document.createElement('div');
+        card.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 relative";
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <div class="font-bold text-blue-900 text-base flex items-center gap-2">
+                        ${row.TEN}
+                        ${saleBadge}
+                    </div>
+                    <div class="font-mono text-slate-600 font-bold text-sm mt-0.5" onclick="navigator.clipboard.writeText('${row.SDT}')">${row.SDT}</div>
+                </div>
+                <button onclick="openActionMenu('${row.SDT}', '${row.TEN}')" class="text-slate-400 p-2 -mr-2"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>
+            </div>
+            
+            <div class="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                <i class="fa-solid fa-location-dot text-slate-300"></i>
+                <span class="truncate">${row.DIACHI || 'Chưa có địa chỉ'}</span>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-slate-50 pt-3 mt-1">
+                <div class="flex items-center gap-3">
+                    ${row.SOCIAL ? `<a href="${row.SOCIAL}" target="_blank" class="text-blue-500 text-lg"><i class="fa-brands fa-facebook"></i></a>` : ''}
+                    ${row.CCCD ? `<span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-200">CCCD</span>` : ''}
+                </div>
+                <div class="${moneyClass} text-sm">${row.TONGTIEN > 0 ? formatMoney(row.TONGTIEN) : '0 ₫'}</div>
+            </div>
+        `;
+        mobileList.appendChild(card);
     });
 }
 
 // --- ADD / EDIT ---
 function openModal(mode) {
-    const m = qs('#modal'); m.classList.remove('modal-hide'); m.classList.add('modal-open');
-    const mc = qs('#modalContent'); mc.classList.remove('scale-95'); mc.classList.add('scale-100');
+    const m = qs('#modal'); m.classList.remove('hidden'); 
+    setTimeout(() => { m.classList.remove('modal-hide'); m.classList.add('modal-open'); }, 10);
+    
+    // Reset form select
     const saleSelect = qs('#inp_sale');
     saleSelect.innerHTML = `<option value="${NV_TEN}">${NV_TEN}</option><option value="SHOP">SHOP</option>`;
 
@@ -345,7 +409,7 @@ function openEdit(sdt) {
 
 function closeModal() {
     const m = qs('#modal'); m.classList.remove('modal-open'); m.classList.add('modal-hide');
-    const mc = qs('#modalContent'); mc.classList.remove('scale-100'); mc.classList.add('scale-95');
+    setTimeout(() => m.classList.add('hidden'), 200);
 }
 
 async function saveCustomer() {
@@ -392,11 +456,20 @@ function triggerAction(action) { closeActionMenu(); if(action === 'edit') openEd
 qs('#actionSheet').onclick = (e) => { if(e.target === qs('#actionSheet')) closeActionMenu(); };
 </script>
 
+<!-- Action Sheet (Giữ nguyên) -->
 <div id="actionSheet" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end justify-center">
   <div class="bg-white w-full max-w-md rounded-t-2xl shadow-2xl p-4 translate-y-full transition-transform duration-300">
-    <div class="text-center mb-3"><div id="as_name" class="font-bold text-slate-800"></div><div id="as_sdt" class="text-xs text-slate-500"></div></div>
-    <div class="space-y-2"><button onclick="triggerAction('edit')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 transition"><i class="fa-solid fa-pen text-blue-600"></i> Sửa thông tin</button></div>
-    <button onclick="closeActionMenu()" class="mt-4 w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-medium">Đóng</button>
+    <div class="text-center mb-4 pb-3 border-b">
+        <div id="as_name" class="font-bold text-lg text-slate-800"></div>
+        <div id="as_sdt" class="text-sm font-mono text-slate-500 font-bold"></div>
+    </div>
+    <div class="space-y-3">
+        <button onclick="triggerAction('edit')" class="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition active:scale-95">
+            <i class="fa-solid fa-pen"></i> Sửa thông tin
+        </button>
+        <!-- Nút xóa (ẩn hoặc hiện tùy nhu cầu) -->
+    </div>
+    <button onclick="closeActionMenu()" class="mt-4 w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200">Đóng</button>
   </div>
 </div>
 </body>

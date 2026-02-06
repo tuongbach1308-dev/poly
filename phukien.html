@@ -130,17 +130,18 @@
     </div>
 </div>
 
-<!-- MODAL GIỎ HÀNG (Cart & Checkout) -->
+<!-- MODAL GIỎ HÀNG (Cart & Checkout) - ĐÃ CẬP NHẬT FULL WIDTH BUTTON -->
 <div id="cartModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm hidden">
-    <div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden transform transition-all duration-200 scale-95 flex flex-col max-h-[95vh]">
-        <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
+    <!-- Class thay đổi: w-full h-full md:h-auto md:max-w-3xl md:max-h-[95vh] md:rounded-xl -->
+    <div class="bg-white w-full h-full md:h-auto md:max-w-3xl md:max-h-[95vh] md:rounded-xl shadow-2xl overflow-hidden transform transition-all duration-200 scale-95 flex flex-col">
+        <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0 z-20">
             <h2 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-cart-shopping"></i> Giỏ Hàng & Thanh Toán</h2>
-            <button onclick="closeCartModal()" class="hover:text-red-200 text-2xl leading-none">&times;</button>
+            <button onclick="closeCartModal()" class="hover:text-red-200 text-3xl leading-none w-8 h-8 flex items-center justify-center active:bg-blue-700 rounded-full">&times;</button>
         </div>
         
         <div class="flex flex-col md:flex-row h-full overflow-hidden">
-            <!-- Left: List Items -->
-            <div class="w-full md:w-3/5 p-4 overflow-y-auto border-r border-gray-200 bg-gray-50">
+            <!-- Left: List Items (Fixed height on mobile to allow Payment form to show) -->
+            <div class="w-full md:w-3/5 p-4 overflow-y-auto border-b md:border-b-0 md:border-r border-gray-200 bg-gray-50 h-56 md:h-full shrink-0">
                 <table class="w-full text-left text-sm">
                     <thead class="text-xs text-gray-500 border-b border-gray-300">
                         <tr>
@@ -155,9 +156,10 @@
                 <div id="emptyCartMsg" class="text-center text-gray-400 py-10 italic hidden">Giỏ hàng trống</div>
             </div>
 
-            <!-- Right: Payment Info -->
-            <div class="w-full md:w-2/5 p-5 bg-white flex flex-col overflow-y-auto">
-                <div class="space-y-3 flex-1">
+            <!-- Right: Payment Info (Takes remaining space, Button sticky bottom) -->
+            <div class="w-full md:w-2/5 bg-white flex flex-col flex-1 overflow-hidden">
+                <!-- Inputs Scroll Area -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-3">
                     <div class="bg-yellow-50 p-3 rounded border border-yellow-200 mb-2">
                         <div class="flex justify-between items-end">
                              <label class="text-xs font-bold text-yellow-800">TỔNG CỘNG</label>
@@ -172,7 +174,6 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nhân Viên Sale</label>
-                            <!-- CHỈNH SỬA: Chuyển Input sang Select -->
                             <select id="pay_sale" class="w-full border p-2 rounded text-sm font-bold text-indigo-700 bg-white">
                                 <!-- Options sẽ được load từ JS -->
                             </select>
@@ -215,9 +216,13 @@
                         <textarea id="pay_note" rows="2" class="w-full border p-2 rounded text-sm"></textarea>
                     </div>
                 </div>
-                <button onclick="processCheckout()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg mt-4 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-check"></i> THANH TOÁN
-                </button>
+
+                <!-- Sticky Footer Button (FULL WIDTH) -->
+                <div class="border-t border-gray-200 bg-white shrink-0 z-10">
+                    <button onclick="processCheckout()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 text-base shadow-none rounded-none flex items-center justify-center gap-2 active:bg-blue-800 transition-colors">
+                        <i class="fa-solid fa-check"></i> THANH TOÁN
+                    </button>
+                </div>
             </div>
         </div>
     </div>
