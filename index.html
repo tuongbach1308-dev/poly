@@ -5,32 +5,70 @@
   <title>Đăng nhập nhân viên</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .modal-hide { opacity: 0; pointer-events: none; transform: scale(0.95); }
+    .modal-show { opacity: 1; pointer-events: auto; transform: scale(1); }
+  </style>
 </head>
 
-<body class="h-screen flex items-center justify-center bg-gray-100">
+<body class="h-screen flex items-center justify-center bg-gray-100 font-sans text-sm">
 
-<div class="bg-white p-6 rounded-xl shadow w-80">
-  <h1 class="text-lg font-bold mb-4 text-center">Đăng nhập</h1>
+<!-- FORM ĐĂNG NHẬP -->
+<div class="bg-white p-6 rounded-xl shadow w-80 relative z-10">
+  <h1 class="text-lg font-bold mb-4 text-center text-gray-700">HỆ THỐNG NỘI BỘ</h1>
 
-  <select id="nvSelect" class="w-full border p-2 rounded mb-3">
+  <select id="nvSelect" class="w-full border p-2.5 rounded mb-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
     <option value="">-- Chọn nhân viên --</option>
   </select>
 
   <input id="pw"
     type="password"
     placeholder="Mật khẩu"
-    class="w-full border p-2 rounded mb-4">
+    class="w-full border p-2.5 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
 
   <button onclick="login()"
-    class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-    Vào hệ thống
+    class="w-full bg-blue-600 text-white py-2.5 rounded font-bold hover:bg-blue-700 transition mb-3 shadow-md">
+    VÀO HỆ THỐNG
   </button>
 
-  <p id="err" class="text-sm text-red-500 mt-3 hidden"></p>
+  <p id="err" class="text-xs text-red-500 mb-3 hidden text-center font-bold"></p>
+
+  <div class="text-center border-t pt-3">
+    <a href="#" onclick="openChangePwModal()" class="text-xs text-gray-500 hover:text-blue-600 underline">Đổi mật khẩu?</a>
+  </div>
+</div>
+
+<!-- MODAL ĐỔI MẬT KHẨU -->
+<div id="changePwModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center transition-all duration-200 modal-hide backdrop-blur-sm">
+  <div class="bg-white w-80 rounded-xl shadow-2xl p-5 relative">
+    <button onclick="closeChangePwModal()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl font-bold">&times;</button>
+    <h2 class="text-md font-bold mb-4 text-center text-blue-700 uppercase">Đổi Mật Khẩu</h2>
+    
+    <div class="mb-3">
+      <label class="block text-xs font-bold text-gray-500 mb-1">Nhân viên</label>
+      <input type="text" id="cp_name" class="w-full border p-2 rounded bg-gray-100 text-gray-600" readonly>
+      <input type="hidden" id="cp_id">
+    </div>
+
+    <div class="mb-3">
+      <label class="block text-xs font-bold text-gray-500 mb-1">Mật khẩu cũ</label>
+      <input type="password" id="cp_old" class="w-full border p-2 rounded focus:border-blue-500 outline-none">
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-xs font-bold text-gray-500 mb-1">Mật khẩu mới</label>
+      <input type="password" id="cp_new" class="w-full border p-2 rounded focus:border-blue-500 outline-none">
+    </div>
+
+    <button onclick="doChangePassword()" id="btnChange" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded shadow-md transition">
+      Xác Nhận Đổi
+    </button>
+  </div>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwnihSbsSTe3K58HxCRTFAbLLyeAPLSpL1pNOdYBDUY3cNkuhAokl_aNnLDIWJZz0jV/exec";
+// !!! LINK API BACKEND !!!
+const API_URL = "https://script.google.com/macros/s/AKfycbx1fzKqJFFlEbiL-3E0TyGHIkYv2x839vWLIlvZX40YPuipmJYzH27oXKZd8tcNhEnm/exec";
 
 const select = document.getElementById("nvSelect");
 const errEl  = document.getElementById("err");
@@ -84,6 +122,73 @@ function login() {
 function showErr(msg) {
   errEl.textContent = msg;
   errEl.classList.remove("hidden");
+}
+
+// --- LOGIC ĐỔI MẬT KHẨU ---
+function openChangePwModal() {
+  const id = select.value;
+  if (!id) {
+    showErr("Vui lòng chọn Tên nhân viên trước khi đổi mật khẩu!");
+    return;
+  }
+  const name = select.options[select.selectedIndex].dataset.ten;
+  
+  document.getElementById("cp_id").value = id;
+  document.getElementById("cp_name").value = name;
+  document.getElementById("cp_old").value = "";
+  document.getElementById("cp_new").value = "";
+  
+  const m = document.getElementById("changePwModal");
+  m.classList.remove("modal-hide");
+  m.classList.add("modal-show");
+  errEl.classList.add("hidden");
+}
+
+function closeChangePwModal() {
+  const m = document.getElementById("changePwModal");
+  m.classList.remove("modal-show");
+  m.classList.add("modal-hide");
+}
+
+function doChangePassword() {
+  const id = document.getElementById("cp_id").value;
+  const oldPw = document.getElementById("cp_old").value.trim();
+  const newPw = document.getElementById("cp_new").value.trim();
+  const btn = document.getElementById("btnChange");
+
+  if (!oldPw || !newPw) {
+    alert("Vui lòng nhập đầy đủ thông tin!");
+    return;
+  }
+
+  btn.innerText = "Đang xử lý...";
+  btn.disabled = true;
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "changePassword",
+      id: id,
+      oldPw: oldPw,
+      newPw: newPw
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.success) {
+      alert("✅ " + res.message);
+      closeChangePwModal();
+      document.getElementById("pw").value = ""; // Xóa mật khẩu ở form chính để nhập lại
+    } else {
+      alert("❌ " + res.message);
+    }
+  })
+  .catch(e => alert("Lỗi kết nối!"))
+  .finally(() => {
+    btn.innerText = "Xác Nhận Đổi";
+    btn.disabled = false;
+  });
 }
 </script>
 
