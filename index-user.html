@@ -70,6 +70,18 @@
         <i class="fa-solid fa-screwdriver-wrench w-5"></i>
         Sửa Chữa
       </button>
+      
+      <!-- BẢO HÀNH -->
+      <button onclick="switchTab('baohanh', this)" class="menu-btn">
+        <i class="fa-solid fa-shield-halved w-5"></i>
+        Bảo Hành & Lỗi
+      </button>
+
+      <!-- MỤC MỚI: BẢNG GIÁ SỬA CHỮA -->
+      <button onclick="switchTab('banggiasua', this)" class="menu-btn">
+        <i class="fa-solid fa-tags w-5"></i>
+        Bảng Giá Sửa Chữa
+      </button>
 
     </nav>
 
@@ -122,6 +134,10 @@
       <iframe id="frame_donhang" src="donhang.html" class="app-frame hidden"></iframe>
       <iframe id="frame_khachhang" src="khachhang.html" class="app-frame hidden"></iframe>
       <iframe id="frame_repair" src="repair.html" class="app-frame hidden"></iframe>
+      <iframe id="frame_baohanh" src="baohanh.html" class="app-frame hidden"></iframe>
+      
+      <!-- MỤC MỚI: FRAME BẢNG GIÁ SỬA CHỮA -->
+      <iframe id="frame_banggiasua" src="banggiasua.html" class="app-frame hidden"></iframe>
     </div>
 
   </main>
@@ -214,7 +230,9 @@ function switchTab(tab, btn){
     checkdonhang:"Check Đơn Hàng",
     donhang:"Đơn Hàng & Bảo Hành",
     khachhang:"Khách Hàng",
-    repair:"Sửa Chữa"
+    repair:"Sửa Chữa",
+    baohanh:"Bảo Hành & Máy Lỗi",
+    banggiasua:"Bảng Giá Sửa Chữa" // Tiêu đề mới
   };
   pageTitle.innerText = titleMap[tab] || "Apple Store";
 

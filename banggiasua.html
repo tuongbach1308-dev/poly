@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bảng Giá Sửa Chữa - Apple Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Hide scrollbar for horizontal tabs */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Card Animation */
+        .price-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hidden-card { display: none !important; }
+        
+        /* Input Focus Effect */
+        .search-wrapper:focus-within {
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            border-color: #6366f1;
+        }
+
+        /* Device Tab Active State */
+        .device-tab.active {
+            background-color: #4f46e5; /* Indigo 600 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+            border-color: transparent;
+        }
+        .device-tab {
+            background-color: white;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 640px) {
+            .item-row { padding-top: 10px; padding-bottom: 10px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen custom-scrollbar flex flex-col">
+
+    <!-- STICKY HEADER -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex flex-col gap-3">
+                <!-- Top Row: Logo & Info -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-sm shadow-md shadow-indigo-200">
+                            <i class="fa-solid fa-wrench"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-extrabold text-gray-800 tracking-tight leading-none">BẢNG GIÁ DỊCH VỤ</h1>
+                            <p class="text-[10px] text-gray-500 font-medium uppercase mt-0.5 tracking-wider">Cập nhật: <span id="currentDate">--/--/----</span></p>
+                        </div>
+                    </div>
+                    <!-- Device Tabs (Large) -->
+                    <div class="flex bg-gray-100 p-1 rounded-xl">
+                        <button onclick="switchDevice('iphone')" id="btn-iphone" class="device-tab active px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all flex items-center gap-2">
+                            <i class="fa-brands fa-apple text-sm"></i> iPhone
+                        </button>
+                        <button onclick="switchDevice('ipad')" id="btn-ipad" class="device-tab px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all flex items-center gap-2 ml-1">
+                            <i class="fa-solid fa-tablet-screen-button text-sm"></i> iPad
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Row -->
+                <div class="relative group search-wrapper bg-gray-50 border border-gray-200 rounded-xl transition-all">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400 group-focus-within:text-indigo-500 transition-colors"></i>
+                    </div>
+                    <input type="text" id="searchInput" onkeyup="filterPrices()" 
+                           placeholder="Tìm dòng máy (VD: 14 Pro, Air 5)..." 
+                           class="w-full pl-10 pr-10 py-2.5 bg-transparent outline-none text-sm font-medium text-gray-700 placeholder-gray-400"
+                           autocomplete="off">
+                    <button onclick="clearSearch()" id="clearBtn" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <i class="fa-solid fa-circle-xmark text-gray-300 hover:text-gray-500 transition-colors"></i>
+                    </button>
+                </div>
+
+                <!-- Category Tabs (Horizontal Scroll) -->
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pt-1 pb-1 -mx-4 px-4 md:mx-0 md:px-0 select-none">
+                    <button onclick="filterCategory('all', this)" class="cat-btn active shrink-0 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all shadow-sm bg-gray-800 text-white border border-transparent">Tất cả</button>
+                    <button onclick="filterCategory('pin', this)" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">Pin</button>
+                    <button onclick="filterCategory('kinh', this)" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">Ép Kính</button>
+                    <button onclick="filterCategory('man', this)" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">Màn Hình</button>
+                    <button onclick="filterCategory('vo', this)" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">Vỏ/Độ</button>
+                    <button onclick="filterCategory('lung', this)" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">Kính Lưng</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Bar inside Header -->
+        <div class="bg-gray-50 border-b border-gray-200 px-4 py-1.5 flex justify-between items-center text-[10px] font-medium text-gray-500">
+            <span id="deviceIndicator">Đang xem: <b>iPhone</b></span>
+            <span id="resultCount">Loading...</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 max-w-7xl mx-auto px-4 py-6 w-full">
+        <!-- Grid Container -->
+        <div id="priceGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Cards will be injected here via JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="noResults" class="hidden py-20 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 text-2xl">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <h3 class="text-gray-900 font-bold">Không tìm thấy kết quả</h3>
+            <p class="text-gray-500 text-sm mt-1">Thử tìm kiếm với từ khóa khác hoặc đổi danh mục.</p>
+        </div>
+
+        <div class="mt-8 text-center border-t border-gray-200 pt-4">
+            <p class="text-xs text-gray-400 italic">* Giá đã bao gồm công thợ lắp đặt. Bảo hành theo tiêu chuẩn cửa hàng.</p>
+        </div>
+    </main>
+
+    <!-- BACK TO TOP (Mobile) -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="md:hidden fixed bottom-6 right-6 w-10 h-10 bg-white shadow-lg rounded-full border border-gray-200 flex items-center justify-center text-gray-500 z-30 opacity-90 hover:opacity-100 active:scale-95 transition-all">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // --- CẤU HÌNH DỮ LIỆU ---
+        const servicesConfig = {
+            'pin':  { title: 'Thay Pin Chính Hãng',   icon: 'fa-battery-full',    color: 'green',  bg: 'bg-green-50',  text: 'text-green-700',  border: 'border-green-100',  btn: 'bg-green-100 text-green-700',  war: '12 Tháng' },
+            'kinh': { title: 'Ép Kính / Cảm Ứng',     icon: 'fa-layer-group',     color: 'blue',   bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-100',   btn: 'bg-blue-100 text-blue-700',    war: '12 Tháng' },
+            'man':  { title: 'Thay Màn Hình',         icon: 'fa-mobile-screen',   color: 'purple', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-100', btn: 'bg-purple-100 text-purple-700', war: '06 Tháng' },
+            'vo':   { title: 'Thay Vỏ / Độ Vỏ',       icon: 'fa-shield-halved',   color: 'rose',   bg: 'bg-rose-50',   text: 'text-rose-700',   border: 'border-rose-100',   btn: 'bg-rose-100 text-rose-700',    war: '12 Tháng' },
+            'lung': { title: 'Thay Kính Lưng Sau',    icon: 'fa-square',          color: 'orange', bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-100', btn: 'bg-orange-100 text-orange-700', war: '12 Tháng' }
+        };
+
+        const iphoneData = [
+            { model: "iPhone 15 Pro Max", pin: 1500, kinh: 2500, man: 9500, vo: 3500, lung: 1800 },
+            { model: "iPhone 15 Pro",     pin: 1400, kinh: 2200, man: 8500, vo: 3200, lung: 1600 },
+            { model: "iPhone 15 Plus",    pin: 1200, kinh: 1800, man: 6500, vo: 2500, lung: 1200 },
+            { model: "iPhone 15",         pin: 1100, kinh: 1600, man: 5500, vo: 2200, lung: 1100 },
+            { model: "iPhone 14 Pro Max", pin: 1200, kinh: 1500, man: 8800, vo: 2800, lung: 1200 },
+            { model: "iPhone 14 Pro",     pin: 1100, kinh: 1300, man: 7500, vo: 2600, lung: 1100 },
+            { model: "iPhone 14 Plus",    pin: 950,  kinh: 1100, man: 4500, vo: 1800, lung: 900 },
+            { model: "iPhone 14",         pin: 900,  kinh: 1000, man: 3500, vo: 1600, lung: 800 },
+            { model: "iPhone 13 Pro Max", pin: 950,  kinh: 1200, man: 7800, vo: 2200, lung: 900 },
+            { model: "iPhone 13 Pro",     pin: 900,  kinh: 1000, man: 6500, vo: 2000, lung: 850 },
+            { model: "iPhone 13",         pin: 750,  kinh: 800,  man: 3200, vo: 1500, lung: 700 },
+            { model: "iPhone 12 Pro Max", pin: 850,  kinh: 900,  man: 4500, vo: 1800, lung: 800 },
+            { model: "iPhone 12 Pro",     pin: 750,  kinh: 750,  man: 3200, vo: 1600, lung: 700 },
+            { model: "iPhone 12",         pin: 700,  kinh: 700,  man: 3000, vo: 1500, lung: 650 },
+            { model: "iPhone 11 Pro Max", pin: 750,  kinh: 800,  man: 2800, vo: 1400, lung: 700 },
+            { model: "iPhone 11 Pro",     pin: 650,  kinh: 700,  man: 2200, vo: 1300, lung: 600 },
+            { model: "iPhone 11",         pin: 550,  kinh: 600,  man: 1500, vo: 1100, lung: 500 },
+            { model: "iPhone Xs Max",     pin: 600,  kinh: 650,  man: 2500, vo: 1000, lung: 500 },
+            { model: "iPhone Xs",         pin: 500,  kinh: 550,  man: 1800, vo: 900,  lung: 450 },
+            { model: "iPhone X / Xr",     pin: 450,  kinh: 500,  man: 1600, vo: 900,  lung: 400 },
+            { model: "iPhone 8 Plus",     pin: 350,  kinh: 400,  man: 900,  vo: 700,  lung: 300 },
+            { model: "iPhone 7 Plus",     pin: 300,  kinh: 350,  man: 800,  vo: 600,  lung: 250 }
+        ];
+
+        const ipadData = [
+            { model: "iPad Pro 12.9 M2",  pin: 2500, kinh: 3500, man: 9500, vo: 0 },
+            { model: "iPad Pro 11 M2",    pin: 2200, kinh: 2800, man: 7500, vo: 0 },
+            { model: "iPad Pro 12.9 M1",  pin: 2000, kinh: 3000, man: 8500, vo: 0 },
+            { model: "iPad Pro 11 M1",    pin: 1800, kinh: 2500, man: 6500, vo: 0 },
+            { model: "iPad Air 5",        pin: 1600, kinh: 2200, man: 5500, vo: 3000 },
+            { model: "iPad Air 4",        pin: 1500, kinh: 1800, man: 4500, vo: 2800 },
+            { model: "iPad Gen 10",       pin: 1400, kinh: 1500, man: 3800, vo: 2500 },
+            { model: "iPad Gen 9",        pin: 1200, kinh: 900,  man: 2500, vo: 2000 },
+            { model: "iPad Mini 6",       pin: 1300, kinh: 1600, man: 4500, vo: 0 }
+        ];
+
+        // --- HÀM XỬ LÝ (LOGIC) ---
+
+        let currentCategory = 'all';
+        let currentDevice = 'iphone'; // Default device
+
+        const formatMoney = (val) => {
+            if (!val || val === 0) return '<span class="text-xs text-gray-400 italic font-normal">Liên hệ</span>';
+            return (val * 1000).toLocaleString('vi-VN');
+        };
+
+        // Hàm chuyển đổi thiết bị (iPhone / iPad)
+        function switchDevice(device) {
+            currentDevice = device;
+            
+            // Update Tab UI
+            const btnIphone = document.getElementById('btn-iphone');
+            const btnIpad = document.getElementById('btn-ipad');
+            const indicator = document.getElementById('deviceIndicator');
+            
+            if (device === 'iphone') {
+                btnIphone.classList.add('active');
+                btnIpad.classList.remove('active');
+                indicator.innerHTML = 'Đang xem: <b>iPhone</b>';
+            } else {
+                btnIphone.classList.remove('active');
+                btnIpad.classList.add('active');
+                indicator.innerHTML = 'Đang xem: <b>iPad</b>';
+            }
+
+            filterPrices();
+        }
+
+        function filterCategory(cat, btn) {
+            currentCategory = cat;
+            
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                b.className = "cat-btn shrink-0 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer";
+            });
+            btn.className = "cat-btn active shrink-0 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all shadow-md bg-gray-800 text-white border border-transparent cursor-default transform scale-105";
+
+            filterPrices();
+            
+            if(window.innerWidth < 768) {
+                btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        }
+
+        function filterPrices() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const grid = document.getElementById('priceGrid');
+            const noResults = document.getElementById('noResults');
+            const clearBtn = document.getElementById('clearBtn');
+            const resultCountEl = document.getElementById('resultCount');
+            
+            clearBtn.classList.toggle('hidden', query === '');
+            grid.innerHTML = ''; // Xóa grid cũ để render lại từ đầu
+
+            let totalVisibleItems = 0;
+            let hasAnyCard = false;
+
+            // Chọn dữ liệu dựa trên tab đang active
+            const activeData = currentDevice === 'iphone' ? iphoneData : ipadData;
+
+            // Duyệt qua từng loại dịch vụ để tạo Card
+            for (const [key, cfg] of Object.entries(servicesConfig)) {
+                
+                // 1. Kiểm tra Filter Danh mục (Category Tab)
+                if (currentCategory !== 'all' && currentCategory !== key) continue;
+
+                // 2. Lọc Item bên trong
+                let visibleRowsHTML = '';
+                let visibleRowsCount = 0;
+
+                activeData.forEach(item => {
+                    const price = item[key];
+                    // Nếu là iPad mà dịch vụ là kính lưng (thường ko có) hoặc giá = 0 -> Bỏ qua nếu muốn gọn
+                    if (currentDevice === 'ipad' && key === 'lung' && (!price || price === 0)) return;
+
+                    const modelName = item.model;
+                    const modelNameLower = modelName.toLowerCase();
+                    const serviceTitleLower = cfg.title.toLowerCase();
+
+                    // Logic Search: Tìm theo tên máy hoặc tên dịch vụ
+                    const isSearchMatch = modelNameLower.includes(query) || serviceTitleLower.includes(query);
+
+                    if (isSearchMatch) {
+                        visibleRowsHTML += createRowHTML(modelName, price, currentDevice, cfg.text.replace('text-', 'text-'));
+                        visibleRowsCount++;
+                        totalVisibleItems++;
+                    }
+                });
+
+                // 3. Nếu có dòng nào thỏa mãn thì vẽ Card
+                if (visibleRowsCount > 0) {
+                    hasAnyCard = true;
+                    const card = document.createElement('div');
+                    card.className = `price-card bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full animate-fade-in`;
+                    
+                    let cardHeader = `
+                        <div class="px-4 py-3 border-b ${cfg.border} ${cfg.bg} flex justify-between items-center sticky top-0 z-10">
+                            <span class="${cfg.text} font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid ${cfg.icon}"></i> ${cfg.title}
+                            </span>
+                            <span class="text-[9px] font-bold ${cfg.btn} px-2 py-0.5 rounded-full shadow-sm border border-white/50">BH ${cfg.war}</span>
+                        </div>
+                        <div class="divide-y divide-gray-100 overflow-y-auto max-h-[500px] custom-scrollbar bg-white">
+                            ${visibleRowsHTML}
+                        </div>
+                    `;
+                    card.innerHTML = cardHeader;
+                    grid.appendChild(card);
+                }
+            }
+
+            // Hiển thị Empty State
+            noResults.classList.toggle('hidden', hasAnyCard);
+            
+            // Update count text
+            if(query !== '') resultCountEl.textContent = `Tìm thấy ${totalVisibleItems} kết quả`;
+            else resultCountEl.textContent = `Hiển thị ${totalVisibleItems} dịch vụ`;
+        }
+
+        function createRowHTML(model, price, type, colorClass) {
+            const priceClass = (price && price > 0) ? `font-extrabold text-sm ${colorClass}` : 'text-xs text-gray-400 italic';
+            const displayPrice = formatMoney(price);
+            
+            return `
+                <div class="item-row px-4 py-2.5 flex justify-between items-center hover:bg-gray-50 transition-colors group cursor-default">
+                    <div class="flex flex-col">
+                        <span class="model-name text-[13px] font-semibold text-gray-700 group-hover:text-gray-900">${model}</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wide font-medium hidden group-hover:inline-block transition-opacity duration-300">Linh kiện zin</span>
+                    </div>
+                    <span class="${priceClass}">${displayPrice}</span>
+                </div>
+            `;
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            input.focus();
+            filterPrices();
+        }
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mặc định load iPhone
+            switchDevice('iphone');
+            
+            const now = new Date();
+            document.getElementById('currentDate').innerText = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+        });
+
+    </script>
+</body>
+</html>
