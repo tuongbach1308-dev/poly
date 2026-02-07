@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Quản Lý Đơn Hàng</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -12,8 +12,8 @@
   
   <style>
     /* Base Settings */
-    :root { --primary: #4f46e5; --primary-hover: #4338ca; --success: #16a34a; --danger: #dc2626; --warning: #ca8a04; }
-    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    :root { --primary: #4f46e5; }
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; }
     
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -27,64 +27,31 @@
     .modal-hide { opacity: 0; transform: scale(0.95); pointer-events: none; }
     
     /* Responsive Helpers */
+    .desktop-row { display: none; }
+    .mobile-card { display: block; }
     .desktop-cell { display: none; }
-    @media (min-width: 1024px) { .desktop-cell { display: table-cell; } }
+    
+    @media (min-width: 1024px) { 
+        .desktop-row { display: table-row; }
+        .mobile-card { display: none; }
+        .desktop-cell { display: table-cell; }
+    }
 
     /* Sticky Columns Shadow */
     .sticky-right { position: sticky; right: 0; z-index: 20; }
     .shadow-left { box-shadow: -4px 0 8px -2px rgba(0,0,0,0.1); }
 
-    /* Print Styles (FIXED for Multi-page) */
+    /* Print Styles */
     @media print {
         body * { visibility: hidden; }
         #printModal, #printModal * { visibility: visible; }
-        #printModal { 
-            position: absolute; left: 0; top: 0; width: 100%; height: auto; 
-            background: white; z-index: 9999; overflow: visible !important; 
-            display: block !important;
-        }
+        #printModal { position: absolute; left: 0; top: 0; width: 100%; height: auto; background: white; z-index: 9999; display: block !important; }
         #print-editor, #print-mobile-tabs, .no-print { display: none !important; }
-        
-        #print-preview { 
-            display: block !important; 
-            width: 100% !important; 
-            height: auto !important; 
-            overflow: visible !important; 
-            padding: 0 !important; 
-            margin: 0 !important; 
-        }
-        
-        #preview-wrapper { 
-            transform: none !important; 
-            box-shadow: none !important; 
-            margin: 0 !important; 
-            width: 100% !important; 
-        }
-        
-        .page-container { 
-            width: 100% !important; 
-            /* Remove fixed height to prevent cutting */
-            height: auto !important; 
-            min-height: 290mm; /* Ensure approx A4 height */
-            margin: 0 !important; 
-            padding: 0 !important; 
-            border: none !important; 
-            display: block !important; 
-            page-break-after: always !important; /* Force page break */
-            break-after: page;
-            overflow: visible !important;
-        }
-        
-        .page-container:last-child { 
-            page-break-after: auto !important; 
-            break-after: auto;
-        }
-        
-        .warranty-card { 
-            padding: 10mm 15mm !important; 
-            height: 100% !important; 
-        }
-        
+        #print-preview { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
+        #preview-wrapper { transform: none !important; box-shadow: none !important; margin: 0 !important; width: 100% !important; }
+        .page-container { width: 100% !important; height: auto !important; min-height: 290mm; margin: 0 !important; padding: 0 !important; border: none !important; display: block !important; page-break-after: always !important; break-after: page; }
+        .page-container:last-child { page-break-after: auto !important; break-after: auto; }
+        .warranty-card { padding: 10mm 15mm !important; height: 100% !important; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
     
@@ -93,23 +60,26 @@
     .warranty-card { font-family: 'Times New Roman', serif; width: 100%; height: 100%; padding: 10mm 15mm; font-size: 11pt; color: #000; line-height: 1.4; position: relative; box-sizing: border-box; }
     .dotted-line { border-bottom: 1px dotted #000; flex-grow: 1; margin-left: 5px; position: relative; height: 1.4em; display: inline-block; }
     .input-value { position: absolute; bottom: 2px; left: 0; font-weight: bold; font-family: 'Roboto', sans-serif; white-space: nowrap; width: 100%; }
-    
     .tech-check { font-weight: bold; margin-left: 10px; }
     .tech-check.replaced { color: #dc2626; } 
     .tech-check.original { color: #166534; }
-    
     .section-title { font-weight: bold; text-transform: uppercase; font-size: 12pt; margin-top: 15px; margin-bottom: 8px; text-decoration: underline; }
     .policy-text { text-align: justify; margin-bottom: 6px; line-height: 1.3; font-size: 10.5pt; }
+
+    /* Gift Tag Styles */
+    .gift-tag { display: inline-flex; align-items: center; background: #fff7ed; border: 1px solid #ffedd5; color: #c2410c; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: bold; margin-right: 4px; margin-bottom: 4px; }
+    .gift-tag button { margin-left: 4px; color: #ea580c; cursor: pointer; }
+    .gift-tag button:hover { color: #9a3412; }
   </style>
 </head>
-<body class="text-gray-800">
+<body class="min-h-screen text-sm text-gray-800 bg-gray-50">
 
-<div class="p-3 md:p-6 w-full max-w-[1600px] mx-auto pb-24 no-print">
+<div class="p-2 md:p-6 w-full max-w-[1600px] mx-auto pb-24 no-print">
   
   <!-- DASHBOARD STATS & HEADER -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="md:col-span-4 lg:col-span-1 flex flex-col justify-center">
-          <h1 class="text-2xl font-bold text-indigo-700 flex items-center gap-2">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <div class="md:col-span-4 lg:col-span-1 flex flex-col justify-center mb-2 md:mb-0">
+          <h1 class="text-xl md:text-2xl font-bold text-indigo-700 flex items-center gap-2">
             <span class="bg-indigo-100 p-2 rounded-lg"><i class="fa-solid fa-file-invoice-dollar"></i></span>
             Quản Lý Đơn Hàng
           </h1>
@@ -119,112 +89,121 @@
       <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
           <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-lg"><i class="fa-solid fa-sack-dollar"></i></div>
           <div>
-              <div class="text-xs text-gray-500 font-medium uppercase">Doanh Thu</div>
-              <div id="totalRevenue" class="text-xl font-bold text-gray-800">0 ₫</div>
+              <div class="text-[10px] text-gray-500 font-bold uppercase">Doanh Thu</div>
+              <div id="totalRevenue" class="text-lg font-bold text-gray-800">0 ₫</div>
           </div>
       </div>
 
-      <!-- ẨN LỢI NHUẬN THEO YÊU CẦU -->
+      <!-- ẨN LỢI NHUẬN THEO YÊU CẦU CŨ -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hidden">
           <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg"><i class="fa-solid fa-chart-line"></i></div>
           <div>
-              <div class="text-xs text-gray-500 font-medium uppercase">Lợi Nhuận</div>
-              <div id="totalProfit" class="text-xl font-bold text-gray-800">0 ₫</div>
+              <div class="text-[10px] text-gray-500 font-bold uppercase">Lợi Nhuận</div>
+              <div id="totalProfit" class="text-lg font-bold text-gray-800">0 ₫</div>
           </div>
       </div>
 
-      <!-- MÁY BÁN RA (CHỈ ĐẾM SERI, KHÔNG ĐẾM SKU PHỤ KIỆN) -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
           <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-lg"><i class="fa-solid fa-mobile-screen"></i></div>
           <div>
-              <div class="text-xs text-gray-500 font-medium uppercase">Máy Bán Ra</div>
-              <div id="totalSeriCount" class="text-xl font-bold text-gray-800">0</div>
+              <div class="text-[10px] text-gray-500 font-bold uppercase">Máy Bán Ra</div>
+              <div id="totalSeriCount" class="text-lg font-bold text-gray-800">0</div>
           </div>
       </div>
 
       <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
           <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-lg"><i class="fa-solid fa-receipt"></i></div>
           <div>
-              <div class="text-xs text-gray-500 font-medium uppercase">Đơn Hàng</div>
-              <div id="totalCount" class="text-xl font-bold text-gray-800">0</div>
+              <div class="text-[10px] text-gray-500 font-bold uppercase">Đơn Hàng</div>
+              <div id="totalCount" class="text-lg font-bold text-gray-800">0</div>
           </div>
       </div>
   </div>
 
   <!-- TOOLBAR & FILTERS -->
   <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-4 flex flex-col md:flex-row gap-3 items-center z-30">
-        <!-- BỘ LỌC NGÀY VÀ LOẠI ĐƠN -->
-        <div class="flex gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-200 shrink-0 overflow-x-auto w-full md:w-auto items-center">
-            <!-- MỚI: BỘ LỌC LOẠI ĐƠN HÀNG -->
-            <select id="filterCategory" onchange="filterData()" class="bg-white border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-indigo-500 text-gray-600 font-bold h-[30px] cursor-pointer">
-                <option value="ALL">📦 Tất cả</option>
+        <!-- BỘ LỌC KẾT HỢP -->
+        <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+            <!-- Loại đơn -->
+            <select id="filterCategory" onchange="filterData()" class="bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-gray-700 font-medium h-[42px]">
+                <option value="ALL">📦 Tất cả loại</option>
                 <option value="MACHINE">📱 Máy (Serial)</option>
                 <option value="ACCESSORY">🎧 Phụ Kiện</option>
             </select>
-            
-            <div class="w-px h-4 bg-gray-300 mx-1"></div>
 
-            <!-- CHỈ CÒN CHỌN THÁNG (Mặc định THÁNG NÀY) -->
-            <select id="filterTime" onchange="filterData()" class="bg-white border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-indigo-500 text-indigo-700 font-bold h-[30px] cursor-pointer min-w-[120px]">
-                <option value="THIS_MONTH" selected>📅 Tháng Này</option>
-                <option value="LAST_MONTH">⏮️ Tháng Trước</option>
+            <!-- Thời gian (MỚI) -->
+            <select id="filterTime" onchange="filterData()" class="bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-indigo-700 font-bold h-[42px]">
+                <option value="THIS_MONTH" selected>📅 Tháng này</option>
+                <option value="LAST_MONTH">⏮️ Tháng trước</option>
+                <option value="THIS_QUARTER">📊 Quý này</option>
+                <option value="ALL">🗓️ Toàn thời gian</option>
             </select>
+            
+            <!-- ĐÃ BỎ BỘ LỌC SALE VÌ USER CHỈ XEM ĐƯỢC CỦA MÌNH -->
         </div>
 
         <div class="relative flex-1 w-full">
             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
             <input id="searchInput" type="text" oninput="filterData()" placeholder="Tìm tên khách, số seri, tên máy..."
-            class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-700 placeholder-gray-400" />
+            class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-gray-700 placeholder-gray-400" />
         </div>
 
         <div class="flex gap-2 shrink-0 w-full md:w-auto">
-            <button onclick="loadData()" class="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors border border-gray-200">
+            <button onclick="loadData()" class="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors border border-gray-200 shadow-sm">
                 <i class="fa-solid fa-rotate"></i>
             </button>
-            <button onclick="openModal('add')" class="flex-1 md:flex-none px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold shadow-sm flex items-center justify-center gap-2 active:scale-95 transform duration-150">
+            <button onclick="openModal('add')" class="flex-1 md:flex-none px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold shadow-md flex items-center justify-center gap-2 active:scale-95 transform duration-150">
                 <i class="fa-solid fa-plus-circle"></i> <span>Tạo Đơn</span>
             </button>
         </div>
   </div>
 
-  <!-- TABLE DATA -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col relative" style="min-height: 500px;">
-    <div id="loading" class="hidden absolute inset-0 bg-white/80 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-100 border-t-indigo-600 mb-3 shadow-lg"></div>
-        <span class="text-indigo-700 font-bold text-sm animate-pulse">Đang đồng bộ dữ liệu...</span>
+  <!-- DATA CONTAINER -->
+  <div class="relative bg-white rounded-xl shadow border border-gray-200 overflow-hidden flex flex-col min-h-[500px] bg-gray-50 md:bg-white">
+    <div id="loading" class="hidden absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-3"></div>
+        <span class="text-indigo-700 font-medium text-xs animate-pulse">Đang tải dữ liệu...</span>
     </div>
 
     <div class="overflow-x-auto custom-scrollbar flex-1">
-        <table class="min-w-full text-left border-collapse w-full">
+        <!-- DESKTOP TABLE -->
+        <table class="min-w-full text-left border-collapse hidden md:table">
             <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-semibold sticky top-0 z-20 shadow-sm">
                 <tr>
-                    <th class="p-4 w-14 text-center desktop-cell">#</th>
-                    <th class="p-4 w-28 text-center desktop-cell">Ngày Bán</th>
+                    <th class="p-4 w-14 text-center">#</th>
+                    <th class="p-4 w-28 text-center">Ngày Bán</th>
                     <th class="p-4 min-w-[250px]">Sản Phẩm & Seri</th>
-                    <th class="p-4 w-48 desktop-cell">Khách Hàng</th>
-                    <th class="p-4 w-32 text-center desktop-cell">Bảo Hành</th>
-                    <th class="p-4 w-36 text-right desktop-cell">Tài Chính</th>
+                    <th class="p-4 w-48">Khách Hàng</th>
+                    <th class="p-4 w-32 text-center">Bảo Hành</th>
+                    <th class="p-4 w-36 text-right">Tài Chính</th>
+                    <!-- ĐÃ ẨN CỘT SALE -->
                     <th class="p-4 w-16 text-center sticky right-0 bg-gray-50 shadow-left">Xử Lý</th>
                 </tr>
             </thead>
             <tbody id="tableBody" class="divide-y divide-gray-100 text-sm text-gray-700"></tbody>
         </table>
+
+        <!-- MOBILE CARD LIST -->
+        <div id="mobileList" class="md:hidden p-3 space-y-3">
+            <!-- Cards will be injected here -->
+        </div>
     </div>
   </div>
 </div>
 
 <!-- MODAL ADD/EDIT (FULL SCREEN ON MOBILE) -->
 <div id="modal" class="fixed inset-0 bg-black/60 z-40 flex items-center justify-center transition-opacity duration-200 modal-hide backdrop-blur-sm no-print hidden">
-  <!-- Thay đổi class: Full screen mobile (w-full h-full), Popup desktop (md:h-auto md:max-w-4xl) -->
-  <div class="bg-white w-full h-full md:h-auto md:max-w-4xl md:max-h-[90vh] md:rounded-2xl shadow-2xl flex flex-col overflow-hidden transform transition-all duration-200">
-    <div class="bg-indigo-600 p-4 flex justify-between items-center text-white shrink-0">
+  <div class="bg-white w-full h-[100dvh] md:h-auto md:max-w-4xl md:max-h-[90vh] md:rounded-2xl shadow-2xl flex flex-col overflow-hidden transform transition-all duration-200">
+    
+    <div class="bg-indigo-600 p-4 flex justify-between items-center text-white shrink-0 shadow-md z-10">
         <h2 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-file-signature"></i> <span id="modalTitle">Thông Tin Đơn Hàng</span></h2>
         <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-indigo-500 transition text-white text-xl">&times;</button>
     </div>
     
-    <div class="p-6 overflow-y-auto grow bg-gray-50 space-y-6">
+    <div class="p-6 overflow-y-auto flex-1 bg-gray-50 space-y-6">
         <input type="hidden" id="seri_key">
         
+        <!-- Thông tin khách -->
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
              <div class="absolute top-0 left-0 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-3 py-1 rounded-br-lg uppercase tracking-wider">Thông tin khách hàng</div>
              <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-3">
@@ -239,6 +218,7 @@
              </div>
         </div>
 
+        <!-- Thông tin sản phẩm -->
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
              <div class="absolute top-0 left-0 bg-green-100 text-green-700 text-[10px] font-bold px-3 py-1 rounded-br-lg uppercase tracking-wider">Thông tin sản phẩm</div>
              <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mt-3">
@@ -254,6 +234,7 @@
              </div>
         </div>
 
+        <!-- Thanh toán & Bảo hành -->
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
              <div class="absolute top-0 left-0 bg-orange-100 text-orange-700 text-[10px] font-bold px-3 py-1 rounded-br-lg uppercase tracking-wider">Thanh toán & Bảo hành</div>
              <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mt-3">
@@ -261,26 +242,46 @@
                      <label class="block text-xs font-bold text-red-600 uppercase mb-1">Giá Bán</label>
                      <input type="text" id="inp_giaban" onkeyup="formatCurrencyInput(this)" class="w-full border border-red-200 rounded-lg p-2.5 outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 font-bold text-red-600 bg-red-50/30 text-lg">
                  </div>
-                 <!-- ẨN GIÁ VỐN THEO YÊU CẦU -->
+                 <!-- Ẩn Giá Vốn nhưng vẫn dùng để tính toán -->
                  <div class="hidden">
-                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Giá Vốn</label>
-                     <input type="text" id="inp_gianhap" class="w-full border border-gray-200 rounded-lg p-2.5 bg-gray-100 text-gray-400 text-sm font-mono cursor-not-allowed" readonly>
+                     <input type="text" id="inp_gianhap">
                  </div>
                  <div>
                      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ngày Bán</label>
                      <input type="date" id="inp_date" class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500 text-sm font-medium text-gray-700">
                  </div>
-                 <div>
-                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hình Thức TT</label>
-                     <!-- CẬP NHẬT LIST PTTT: CK, TM, GÓP, THẺ, NỢ -->
-                     <select id="inp_pttt" class="w-full border border-gray-300 rounded-lg p-2.5 outline-none bg-white text-sm font-medium">
+                 
+                 <!-- PTTT NÂNG CẤP (CHO PHÉP CHIA NHỎ) -->
+                 <div class="col-span-1 relative">
+                     <div class="flex justify-between items-center mb-1">
+                         <label class="block text-xs font-bold text-gray-500 uppercase">Hình Thức TT</label>
+                         <button type="button" onclick="togglePtttMode()" id="btnPtttToggle" class="text-[10px] text-indigo-600 font-bold hover:underline hover:text-indigo-800 cursor-pointer transition">
+                             <i class="fa-solid fa-code-branch mr-1"></i>Chia nhỏ
+                         </button>
+                     </div>
+                     
+                     <!-- Mode 1: Simple (Default) -->
+                     <select id="inp_pttt_simple" class="w-full border border-gray-300 rounded-lg p-2.5 outline-none bg-white text-sm font-medium">
                          <option>CK</option>
                          <option>TM</option>
                          <option>GÓP</option>
                          <option>THẺ</option>
                          <option>NỢ</option>
                      </select>
+
+                     <!-- Mode 2: Split (Hidden) -->
+                     <div id="div_pttt_split" class="hidden space-y-2 bg-gray-50 p-2 rounded-lg border border-gray-200 shadow-inner">
+                        <div class="flex gap-1 items-center">
+                            <select id="pttt_method_1" class="w-16 border border-gray-300 rounded p-1.5 text-xs font-bold bg-white"><option>TM</option><option>CK</option><option>THẺ</option></select>
+                            <input type="text" id="pttt_amount_1" onkeyup="formatCurrencyInput(this)" class="flex-1 border border-gray-300 rounded p-1.5 text-xs font-mono" placeholder="Số tiền...">
+                        </div>
+                        <div class="flex gap-1 items-center">
+                            <select id="pttt_method_2" class="w-16 border border-gray-300 rounded p-1.5 text-xs font-bold bg-white"><option>CK</option><option>TM</option><option>GÓP</option></select>
+                            <input type="text" id="pttt_amount_2" onkeyup="formatCurrencyInput(this)" class="flex-1 border border-gray-300 rounded p-1.5 text-xs font-mono" placeholder="Số tiền...">
+                        </div>
+                     </div>
                  </div>
+
                  <div>
                      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Bao Test</label>
                      <input type="text" id="inp_baotest" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" placeholder="7 ngày">
@@ -289,13 +290,25 @@
                      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Bảo Hành</label>
                      <input type="text" id="inp_baohanh" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" placeholder="6 tháng">
                  </div>
-                 <div class="col-span-2">
+                 
+                 <div class="hidden">
                      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nhân Viên Sale</label>
-                     <!-- Đã đổi sang Select -->
-                     <select id="inp_sale" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm font-bold text-indigo-700 bg-white outline-none focus:border-indigo-500">
-                        <!-- Options sẽ được JS thêm vào -->
-                     </select>
+                     <input type="text" id="inp_sale" value="SHOP" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm font-bold text-indigo-700 bg-white">
                  </div>
+                 
+                 <!-- MỚI: TÍNH NĂNG CHỌN QUÀ TỪ KHO -->
+                 <div class="col-span-2 md:col-span-4 bg-orange-50 p-3 rounded-lg border border-orange-100 relative">
+                     <label class="block text-xs font-bold text-orange-600 uppercase mb-2 flex items-center justify-between">
+                         <span><i class="fa-solid fa-gift mr-1"></i>Quà Tặng Kèm (Tự động trừ kho)</span>
+                         <button onclick="openGiftSelect()" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs transition shadow-sm font-bold"><i class="fa-solid fa-plus mr-1"></i>Chọn Quà</button>
+                     </label>
+                     
+                     <!-- Vùng hiển thị quà đã chọn -->
+                     <div id="selected-gifts-container" class="min-h-[40px] border border-dashed border-orange-300 rounded bg-white p-2 flex flex-wrap gap-2 text-sm text-gray-500 italic">
+                         (Chưa có quà tặng)
+                     </div>
+                 </div>
+
                  <div class="col-span-2 md:col-span-4">
                      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ghi Chú Đơn Hàng</label>
                      <textarea id="inp_ghichu" rows="2" class="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500 text-sm" placeholder="Ghi chú thêm..."></textarea>
@@ -304,7 +317,7 @@
         </div>
     </div>
 
-    <div class="p-4 border-t bg-white flex justify-end gap-3 shrink-0">
+    <div class="p-4 border-t bg-white flex justify-end gap-3 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
       <button onclick="closeModal()" class="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-600 font-bold transition">Hủy</button>
       <button id="btnSave" onclick="saveData()" class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-lg font-bold transition flex items-center gap-2 transform active:scale-95">
         <i class="fa-solid fa-floppy-disk"></i> Lưu Đơn Hàng
@@ -313,197 +326,31 @@
   </div>
 </div>
 
-<!-- PRINT PREVIEW MODAL -->
-<div id="printModal" class="fixed inset-0 bg-white z-50 hidden flex-col md:flex-row overflow-hidden">
-    <div id="print-mobile-tabs" class="md:hidden flex border-b border-gray-200 bg-gray-50 shrink-0 no-print">
-         <button onclick="switchPrintTab('editor')" id="ptab-editor" class="flex-1 py-3 text-sm font-bold text-indigo-700 border-b-2 border-indigo-700 bg-white transition-colors">Nhập Liệu</button>
-         <button onclick="switchPrintTab('preview')" id="ptab-preview" class="flex-1 py-3 text-sm text-gray-500 font-medium hover:bg-gray-100 transition-colors">Xem Phiếu</button>
-         <button onclick="closePrintModal()" class="px-4 text-red-500 hover:bg-red-50"><i class="fa-solid fa-times text-lg"></i></button>
-    </div>
-
-    <div id="print-editor" class="w-full md:w-1/3 bg-gray-50 border-r border-gray-200 p-5 h-full overflow-y-auto no-print md:block custom-scrollbar">
-        <div class="hidden md:flex justify-between items-center mb-6 border-b pb-3">
-            <h3 class="font-bold text-indigo-800 uppercase flex items-center gap-2"><i class="fa-solid fa-print"></i> Soạn Phiếu In</h3>
-            <button onclick="closePrintModal()" class="text-gray-400 hover:text-red-500 w-8 h-8 rounded-full hover:bg-gray-100 transition flex items-center justify-center text-xl">&times;</button>
+<!-- MODAL CHỌN QUÀ (GIFT SELECTION) -->
+<div id="giftModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden modal-hide backdrop-blur-sm">
+    <div class="bg-white w-full max-w-lg md:rounded-xl h-full md:h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+        <div class="bg-orange-600 p-4 text-white flex justify-between items-center shrink-0">
+             <h3 class="font-bold flex items-center gap-2"><i class="fa-solid fa-gifts"></i> Chọn Quà Tặng</h3>
+             <button onclick="closeGiftModal()" class="w-8 h-8 rounded-full hover:bg-orange-500 flex items-center justify-center text-xl">&times;</button>
         </div>
         
-        <div class="space-y-4 text-sm">
-            <div class="space-y-2">
-                <p class="font-bold text-indigo-600 border-b border-indigo-100 pb-1 text-xs uppercase">1. Thông tin khách hàng</p>
-                <input type="text" id="print_custName" class="w-full border p-2 rounded-lg font-bold" placeholder="Họ tên khách" oninput="updatePrintPreview()">
-                <input type="text" id="print_custPhone" class="w-full border p-2 rounded-lg" placeholder="Số điện thoại" oninput="updatePrintPreview()">
-                <input type="text" id="print_custAddr" class="w-full border p-2 rounded-lg" placeholder="Địa chỉ" oninput="updatePrintPreview()">
-                <input type="text" id="print_custCCCD" class="w-full border p-2 rounded-lg" placeholder="CCCD" oninput="updatePrintPreview()">
-            </div>
-            
-            <div class="space-y-2">
-                <p class="font-bold text-green-600 border-b border-green-100 pb-1 text-xs uppercase">2. Thông tin sản phẩm</p>
-                <input type="text" id="print_prodType" class="w-full border p-2 rounded-lg font-bold" placeholder="Loại (VD: iPad)" oninput="updatePrintPreview()">
-                <input type="text" id="print_prodModel" class="w-full border p-2 rounded-lg" placeholder="Model (VD: Air 4 64G)" oninput="updatePrintPreview()">
-                <input type="text" id="print_prodIMEI" class="w-full border p-2 rounded-lg font-mono uppercase font-bold text-gray-700" placeholder="IMEI/Seri" oninput="updatePrintPreview()">
-                <input type="text" id="print_prodAcc" class="w-full border p-2 rounded-lg" placeholder="Phụ kiện kèm theo" oninput="updatePrintPreview()">
-                <input type="text" id="print_prodCond" class="w-full border p-2 rounded-lg" placeholder="Tình trạng" oninput="updatePrintPreview()">
-            </div>
-            
-            <div class="space-y-2">
-                <p class="font-bold text-orange-600 border-b border-orange-100 pb-1 text-xs uppercase">3. Bảo hành & Quà tặng</p>
-                <!-- NEW BAO TEST FIELD -->
-                <input type="text" id="print_baotest" class="w-full border p-2 rounded-lg" placeholder="Thời gian Bao Test (VD: 7 Ngày)" oninput="updatePrintPreview()">
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="print_warRepair" class="w-full border p-2 rounded-lg col-span-2" placeholder="Thời hạn Bảo Hành (VD: 6 Tháng)" oninput="updatePrintPreview()">
-                </div>
-                <input type="text" id="print_warBattery" class="w-full border p-2 rounded-lg" placeholder="BH Pin" oninput="updatePrintPreview()">
-                <input type="text" id="print_gift" class="w-full border p-2 rounded-lg" placeholder="Quà tặng" oninput="updatePrintPreview()">
-            </div>
-            
-            <div class="border p-3 rounded-lg bg-white mt-2 shadow-sm">
-                <p class="font-bold mb-2 text-xs uppercase text-gray-500">Check List Lỗi:</p>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_lung" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Thay Lưng</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_suon" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Thay Khung</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_epkinh" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Ép Kính</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_manzin" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Màn Zin</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_manlk" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Màn LK</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_pinzin" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Pin Zin</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_pinchu" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Pin Chuẩn</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_pincao" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Pin Cao</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_camtr" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Thay Cam Tr</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_camsau" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Thay Cam Sau</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_main" class="mr-2 accent-indigo-600" onchange="updatePrintPreview()"> Sửa Main</label>
-                    <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" id="chk_cloud" class="mr-2 accent-indigo-600" checked onchange="updatePrintPreview()"> iCloud OK</label>
-                </div>
-            </div>
-            <textarea id="print_notes" class="w-full border p-2 rounded-lg mt-2 text-sm" rows="2" placeholder="Ghi chú in..." oninput="updatePrintPreview()"></textarea>
+        <div class="p-3 bg-gray-50 border-b flex gap-2 shrink-0">
+             <input type="text" id="giftSearch" onkeyup="renderGiftList()" placeholder="Tìm tên phụ kiện..." class="flex-1 border p-2 rounded outline-none focus:border-orange-500 text-sm">
+        </div>
+
+        <div id="giftLoading" class="hidden p-10 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải kho phụ kiện...</div>
+
+        <div class="flex-1 overflow-y-auto p-2 space-y-2 bg-gray-100" id="giftListBody">
+             <!-- List items injected by JS -->
         </div>
         
-        <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 mt-6 rounded-lg shadow-lg flex items-center justify-center gap-2 transition active:scale-95">
-            <i class="fa-solid fa-print"></i> IN PHIẾU NGAY
-        </button>
-    </div>
-
-    <div id="print-preview" class="w-full md:w-2/3 bg-gray-200 p-4 md:p-8 overflow-auto h-full hidden md:flex justify-center items-start custom-scrollbar">
-        <div id="preview-wrapper" class="bg-white shadow-2xl origin-top transition-transform duration-300">
-            <!-- PAGE 1 -->
-            <div class="page-container">
-                <div class="warranty-card text-black relative h-full">
-                    <div class="mb-8">
-                        <div class="flex justify-between items-start border-b-2 border-green-700 pb-2 mb-4">
-                            <div><h1 class="text-4xl font-black text-green-700 tracking-wider">POLY Store</h1></div>
-                            <div class="text-right text-sm">
-                                <p>Đ/c: 170/4/2 Bùi Đình Túy, P.12, Q. Bình Thạnh, TP. HCM</p>
-                                <p class="font-bold text-green-800">Hotline: 0902.96.0804</p>
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <h1 class="text-3xl font-bold uppercase text-green-700 underline decoration-2 underline-offset-4">PHIẾU BẢO HÀNH</h1>
-                            <p class="italic text-sm">(Kiêm biên nhận)</p>
-                        </div>
-                    </div>
-
-                    <div class="section-title text-green-800">1. THÔNG TIN KHÁCH HÀNG</div>
-                    <div class="flex items-baseline mb-1"><span class="w-24 shrink-0 font-bold">Họ và tên:</span><div class="dotted-line"><span class="input-value uppercase" id="prev_custName"></span></div></div>
-                    <div class="flex items-baseline mb-1"><span class="w-24 shrink-0 font-bold">Số điện thoại:</span><div class="dotted-line"><span class="input-value" id="prev_custPhone"></span></div></div>
-                    <div class="flex items-baseline mb-1"><span class="w-24 shrink-0 font-bold">Địa chỉ:</span><div class="dotted-line"><span class="input-value" id="prev_custAddr"></span></div></div>
-                    <div class="flex items-baseline mb-1"><span class="w-24 shrink-0 font-bold">Số CCCD:</span><div class="dotted-line"><span class="input-value" id="prev_custCCCD"></span></div></div>
-
-                    <div class="section-title text-green-800">2. THÔNG TIN SẢN PHẨM</div>
-                    <div class="flex items-baseline mb-1"><span class="w-40 shrink-0 font-bold">Loại sản phẩm:</span><div class="dotted-line"><span class="input-value" id="prev_prodType"></span></div></div>
-                    <div class="flex items-baseline mb-1"><span class="w-40 shrink-0 font-bold">Model/Màu:</span><div class="dotted-line"><span class="input-value" id="prev_prodModel"></span></div></div>
-                    <div class="flex items-baseline mb-1"><span class="w-40 shrink-0 font-bold">Số IMEI/SN:</span><div class="dotted-line"><span class="input-value font-bold" id="prev_prodIMEI"></span></div></div>
-                    <div class="flex items-baseline mb-1"><span class="w-40 shrink-0 font-bold">Phụ kiện kèm theo:</span><div class="dotted-line"><span class="input-value" id="prev_prodAcc"></span></div></div>
-                    <div class="flex items-baseline mb-1"><span class="w-40 shrink-0 font-bold">Tình trạng khi nhận:</span><div class="dotted-line"><span class="input-value" id="prev_prodCond"></span></div></div>
-
-                    <div class="section-title text-green-800">3. CHÍNH SÁCH BẢO HÀNH</div>
-                    <!-- NEW BAO TEST LINE -->
-                    <div class="flex items-baseline mb-1">
-                        <span class="shrink-0 mr-2 font-bold">Thời gian bao test:</span>
-                        <div class="dotted-line"><span class="input-value" id="prev_baotest"></span></div>
-                    </div>
-                    
-                    <div class="flex items-baseline mb-1">
-                        <span class="shrink-0 mr-2 font-bold">Thời hạn bảo hành:</span>
-                        <span class="mr-1 font-bold">(✓) 1 đổi 1</span>
-                        <span class="mx-2"></span>
-                        <span class="mr-1 font-bold">(✓) Sửa chữa</span><div class="dotted-line grow"><span class="input-value" id="prev_warRepair"></span></div>
-                    </div>
-                    <div class="flex items-baseline mb-1"><span class="shrink-0 mr-2 font-bold">Thời hạn bảo hành PIN :</span><div class="dotted-line"><span class="input-value" id="prev_warBattery"></span></div></div>
-                    <div class="flex items-baseline mb-3"><span class="shrink-0 mr-2 font-bold">Loại phụ kiện tặng :</span><div class="dotted-line"><span class="input-value" id="prev_gift"></span></div></div>
-                    
-                    <div class="font-bold mb-2 underline text-green-800">Đủ điều kiện bảo hành khi sản phẩm không bị các lỗi như sau:</div>
-                    <div class="text-sm space-y-1">
-                        <p class="policy-text">- Sản phẩm va đập, cấn móp hoặc có dấu hiệu tác động vật lý</p>
-                        <p class="policy-text">- Sản phẩm bị cháy nổ, chập vỉ, chân sạc cháy</p>
-                        <p class="policy-text">- Sản phẩm bị vào nước, ẩm nước, viền sét đỏ</p>
-                        <p class="policy-text">- Các lỗi phần mềm bên thứ 3</p>
-                        <p class="policy-text">- Khách hàng quên tài khoản iCloud</p>
-                        <p class="policy-text">- Màn hình bị sọc, đốm đen, vàng, trắng</p>
-                        <p class="policy-text">- Không còn tem bảo hành.</p>
-                    </div>
-
-                    <div class="section-title text-green-800">4. CAM KẾT</div>
-                    <p class="mb-1 text-sm">- Hoàn tiền 100% nếu không đúng cam kết.</p>
-                    <p class="mb-8 text-sm italic text-gray-500">(Vui lòng kiểm tra chi tiết linh kiện và ký xác nhận ở trang sau)</p>
-                </div>
-            </div>
-            
-            <!-- PAGE 2 -->
-            <div class="page-container mt-4">
-                <div class="warranty-card text-black relative h-full">
-                    <div class="text-center mb-6">
-                        <h2 class="text-2xl font-bold uppercase underline decoration-2 underline-offset-4">CAM KẾT CHẤT LƯỢNG SẢN PHẨM</h2>
-                    </div>
-                    <div class="flex justify-end mb-4 font-bold text-sm border-b pb-2">
-                        <span class="mr-6 text-red-600">(✓) = Đã thay</span><span class="text-green-700">(✗) = Nguyên bản</span>
-                    </div>
-                    <div class="flex items-baseline mb-6">
-                        <span class="w-32 shrink-0 font-bold">IMEI / SERIAL :</span><div class="dotted-line"><span class="input-value font-bold text-lg" id="prev_page2IMEI"></span></div>
-                    </div>
-
-                    <div class="space-y-3 text-base">
-                        <div>
-                            <div class="font-bold uppercase text-sm border-b border-gray-300 mb-2">Ngoại hình – Khung – Lưng</div>
-                            <div class="flex justify-between pl-4"><span>- Thay mặt lưng</span><span class="tech-check" id="v_lung"></span></div>
-                            <div class="flex justify-between pl-4"><span>- Thay khung / sườn</span><span class="tech-check" id="v_suon"></span></div>
-                        </div>
-                        <div>
-                            <div class="font-bold uppercase text-sm border-b border-gray-300 mb-2 mt-2">Màn hình</div>
-                            <div class="flex justify-between pl-4"><span>- Đã qua ép kính</span><span class="tech-check" id="v_epkinh"></span></div>
-                            <div class="flex justify-between pl-4"><span>- Thay màn hình zin</span><span class="tech-check" id="v_manzin"></span></div>
-                            <div class="flex justify-between pl-4"><span>- Thay màn linh kiện</span><span class="tech-check" id="v_manlk"></span></div>
-                        </div>
-                        <div>
-                            <div class="font-bold uppercase text-sm border-b border-gray-300 mb-2 mt-2">Pin</div>
-                            <div class="flex justify-between pl-4"><span>- Pin zin theo máy</span><span class="tech-check" id="v_pinzin"></span></div>
-                            <div class="flex justify-between pl-4"><span>- Thay pin chuẩn</span><span class="tech-check" id="v_pinchu"></span></div>
-                            <div class="flex justify-between pl-4"><span>- Thay pin cao</span><span class="tech-check" id="v_pincao"></span></div>
-                        </div>
-                        <div>
-                            <div class="font-bold uppercase text-sm border-b border-gray-300 mb-2 mt-2">Mainboard – Chức năng</div>
-                            <div class="flex justify-between pl-4"><span>- Main đã qua sửa chữa</span><span class="tech-check" id="v_main"></span></div>
-                            <div class="flex justify-between pl-4"><span>- iCloud OK</span><span class="tech-check" id="v_cloud"></span></div>
-                        </div>
-                        <div class="mt-4">
-                            <div class="dotted-line w-full mb-6 relative"><span class="input-value" id="prev_notes" style="top:-5px; font-weight:normal;"></span></div>
-                            <div class="dotted-line w-full mb-6"></div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end mt-4 px-12 text-center">
-                        <div class="flex flex-col items-center">
-                            <p class="italic text-sm mb-1" id="prev_date"></p>
-                            <p class="font-bold">Khách hàng xác nhận</p>
-                            <p class="text-xs italic mb-24">(Đã nghe tư vấn & đồng ý)</p>
-                            <p class="font-bold uppercase text-lg" id="prev_signName"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="p-3 bg-white border-t shrink-0 text-right">
+             <button onclick="closeGiftModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded font-bold">Đóng</button>
         </div>
     </div>
 </div>
 
-<!-- ACTION SHEET (MENU 3 CHẤM) -->
+<!-- ACTION SHEET (MENU 3 CHẤM - ĐÃ BỎ NÚT XÓA) -->
 <div id="actionSheet" class="fixed inset-0 bg-black/60 z-50 flex items-end justify-center hidden no-print" onclick="closeActionMenu()">
     <div class="bg-white w-full max-w-md rounded-t-2xl shadow-2xl overflow-hidden transform translate-y-full transition-transform duration-200" id="mas_content" onclick="event.stopPropagation()">
         <div class="bg-gray-100 p-4 text-center border-b font-bold text-gray-700 truncate" id="mas_title">Tên Máy</div>
@@ -512,7 +359,7 @@
              <button onclick="triggerAction('copy')" class="w-full py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-indigo-100 active:scale-95 transition"><i class="fa-regular fa-copy text-xl"></i> Copy Báo Cáo</button>
              <button onclick="triggerAction('print')" class="w-full py-3 bg-green-50 text-green-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-green-100 active:scale-95 transition"><i class="fa-solid fa-print text-xl"></i> In Phiếu Bảo Hành</button>
              <button onclick="triggerAction('edit')" class="w-full py-3 bg-blue-50 text-blue-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-blue-100 active:scale-95 transition"><i class="fa-solid fa-pen text-xl"></i> Sửa Đơn Hàng</button>
-             <!-- BỎ NÚT XÓA ĐƠN HÀNG -->
+             <!-- ĐÃ XÓA NÚT DELETE CHO BẢN USER -->
         </div>
         <div class="p-4 border-t bg-white">
             <button onclick="closeActionMenu()" class="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition">Hủy Bỏ</button>
@@ -523,10 +370,16 @@
 <script>
 // ================= CONFIG =================
 const API_URL = 'https://script.google.com/macros/s/AKfycbxWoqnSMsi-2gNiA_lGlqDkuYEnv7kqoFvkkVY7DY-JIHPuROYwfdobCJ6kX8SHZk1_Jg/exec'; 
+// API Phụ Kiện (Để trừ kho & tính vốn)
+const API_ACC_URL = 'https://script.google.com/macros/s/AKfycbz0wygOHQKBXHIRQvUMnyE0GygUKwVfovJu6dxRzIOYdBukyB-k7JGO3xRtzqfUxN8W/exec';
 // ==========================================
 
 let allData = [];
+let accData = []; // Store accessory data
+let selectedGifts = []; // Selected gifts
 let isEditing = false;
+let isSplitPttt = false; // Flag for PTTT mode
+
 const qs = (s) => document.querySelector(s);
 const getVal = (id) => document.getElementById(id).value;
 const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
@@ -536,42 +389,38 @@ const convertToISO = (d) => { if(!d) return ''; const m = d.match(/^(\d{1,2})\/(
 const formatDateForDisplay = (d) => { if(!d) return ''; const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : d; };
 const formatDateToInput = (d) => { let m = ''+(d.getMonth()+1), dy = ''+d.getDate(), y = d.getFullYear(); if(m.length<2) m='0'+m; if(dy.length<2) dy='0'+dy; return [y,m,dy].join('-'); };
 
-// --- SALE SELECT INIT ---
-function initSaleSelect(targetValue) {
-    const sel = qs('#inp_sale');
-    sel.innerHTML = '';
-    const nv = localStorage.getItem("NV_TEN") || "";
+// --- PTTT LOGIC ---
+function togglePtttMode() {
+    isSplitPttt = !isSplitPttt;
+    const btn = qs('#btnPtttToggle');
+    const simple = qs('#inp_pttt_simple');
+    const split = qs('#div_pttt_split');
     
-    // Create options: NV and SHOP
-    const opts = new Set();
-    if(nv) opts.add(nv);
-    opts.add("SHOP");
-    
-    // If editing and value exists (even if old employee), add it to list
-    if(targetValue) opts.add(targetValue); 
-
-    opts.forEach(v => {
-        const el = document.createElement('option');
-        el.value = v; el.innerText = v;
-        sel.appendChild(el);
-    });
-    
-    // Set selected
-    if(targetValue && opts.has(targetValue)) sel.value = targetValue;
-    else if(nv) sel.value = nv;
+    if (isSplitPttt) {
+        btn.innerHTML = '<i class="fa-solid fa-arrow-left mr-1"></i>Cơ bản';
+        simple.classList.add('hidden');
+        split.classList.remove('hidden');
+    } else {
+        btn.innerHTML = '<i class="fa-solid fa-code-branch mr-1"></i>Chia nhỏ';
+        simple.classList.remove('hidden');
+        split.classList.add('hidden');
+    }
 }
 
-// --- DATE FILTERS (UPDATED LOGIC) ---
-function initDateFilters() {
-    // Initial load: Set filter to THIS_MONTH
-    const filterSelect = qs('#filterTime');
-    if (filterSelect) filterSelect.value = 'THIS_MONTH';
-}
-
-function loadMoreMonth() {
-    // Deprecated function, but keeping structure if referenced elsewhere, 
-    // now we rely on filterTime select change
-    filterData();
+function getPtttValue() {
+    if (!isSplitPttt) return getVal('inp_pttt_simple');
+    
+    const m1 = getVal('pttt_method_1');
+    const a1 = getVal('pttt_amount_1').trim();
+    const m2 = getVal('pttt_method_2');
+    const a2 = getVal('pttt_amount_2').trim();
+    
+    // Construct string like: "TM 500.000 + CK 1.000.000"
+    let parts = [];
+    if(a1) parts.push(`${m1} ${a1}`);
+    if(a2) parts.push(`${m2} ${a2}`);
+    
+    return parts.length > 0 ? parts.join(' + ') : getVal('inp_pttt_simple'); // Fallback if empty
 }
 
 // --- API ---
@@ -588,6 +437,20 @@ async function fetchData(bodyData = null) {
         if(!bodyData) alert("Lỗi kết nối: " + e.message);
         return null;
     }
+}
+
+// NEW: FETCH ACCESSORIES
+async function fetchAccessories() {
+    try {
+        const res = await fetch(API_ACC_URL, {
+            method: 'POST',
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "get_accessories" })
+        });
+        const json = await res.json();
+        if(json.success) return json.data;
+        return [];
+    } catch(e) { console.error(e); return []; }
 }
 
 // --- LOOKUPS ---
@@ -618,75 +481,63 @@ async function lookupCustomer() {
 // --- CORE ---
 async function loadData() {
     qs('#loading').classList.remove('hidden'); 
-    initDateFilters(); 
     const data = await fetchData();
-    if(data) { allData = data; filterData(); }
+    if(data) { 
+        allData = data; 
+        filterData(); 
+    }
     qs('#loading').classList.add('hidden'); 
 }
 
 function filterData() {
     const k = qs('#searchInput').value.toLowerCase();
-    const typeVal = qs('#filterCategory').value; // Get select value
-    const timeVal = qs('#filterTime').value; // Get time filter
+    const typeVal = qs('#filterCategory').value;
+    const timeVal = qs('#filterTime').value;
+    
+    // Tự động lấy NV_TEN để lọc
+    const currentUser = localStorage.getItem("NV_TEN"); 
 
-    // --- DATE FILTER LOGIC ---
     const now = new Date();
     let fromDate, toDate;
-
     if (timeVal === 'THIS_MONTH') {
-        // Start: First day of current month
         fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        // End: Last day of current month (effectively covers up to now)
         toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    } else { // LAST_MONTH
-        // Start: First day of previous month
+    } else if (timeVal === 'LAST_MONTH') {
         fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        // End: Last day of previous month
         toDate = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if (timeVal === 'THIS_QUARTER') {
+        const quarter = Math.floor((now.getMonth() / 3));
+        fromDate = new Date(now.getFullYear(), quarter * 3, 1);
+        toDate = new Date(now.getFullYear(), quarter * 3 + 3, 0);
     }
-    
-    // Convert to YYYY-MM-DD strings for comparison
-    // Use local time conversion to avoid timezone offsets messing up the date
-    const fromStr = formatDateToInput(fromDate);
-    const toStr = formatDateToInput(toDate);
+    const fromStr = fromDate ? formatDateToInput(fromDate) : '';
+    const toStr = toDate ? formatDateToInput(toDate) : '';
 
-    const currentUser = localStorage.getItem("NV_TEN") || ""; 
+    let totalRev = 0, totalProf = 0, countSeri = 0;
 
-    let totalRev = 0;
-    let totalProf = 0;
-    let countSeri = 0;
+    let filtered = allData.filter(r => {
+        // --- LOGIC LỌC THEO SALE CỦA USER ---
+        if (currentUser && (r.SALE || '').trim().toLowerCase() !== currentUser.trim().toLowerCase()) return false;
+        // -------------------------------------
 
-    const filtered = allData.filter(r => {
-        // Sale filter
-        if (currentUser) {
-             const rowSale = (r.SALE || "").trim().toLowerCase();
-             const loginSale = currentUser.trim().toLowerCase();
-             if (rowSale !== loginSale) return false;
-        }
-
-        // Type Filter logic (Modified logic)
         const seriStr = (r.SERI || '').toString().toUpperCase();
         const isAccessory = seriStr.startsWith('PK');
-        
-        if (typeVal === 'MACHINE') {
-            if (isAccessory || !seriStr) return false; // Hide if PK or no seri
-        } else if (typeVal === 'ACCESSORY') {
-            if (!isAccessory) return false; // Hide if NOT PK
-        }
-
-        // Text & Date filter
+        if (typeVal === 'MACHINE' && (isAccessory || !seriStr)) return false;
+        if (typeVal === 'ACCESSORY' && !isAccessory) return false;
         const textMatch = (r.SERI||'').toLowerCase().includes(k) || (r.NAME||'').toLowerCase().includes(k) || (r.SDTKHACH && r.SDTKHACH.includes(k));
-        let dateMatch = false; 
-        
-        if (r.DATE) {
+        let dateMatch = true;
+        if (timeVal !== 'ALL' && r.DATE) {
             const rDateISO = convertToISO(r.DATE);
-            // Check if within range
-            if (rDateISO >= fromStr && rDateISO <= toStr) {
-                dateMatch = true;
-            }
+            if (rDateISO < fromStr || rDateISO > toStr) dateMatch = false;
         }
-        
         return textMatch && dateMatch;
+    });
+
+    // MỚI: Sắp xếp theo ngày giảm dần (Mới nhất lên đầu)
+    filtered.sort((a, b) => {
+        const dateA = new Date(convertToISO(a.DATE) || '1970-01-01');
+        const dateB = new Date(convertToISO(b.DATE) || '1970-01-01');
+        return dateB - dateA;
     });
 
     filtered.forEach(r => {
@@ -694,103 +545,109 @@ function filterData() {
         const buy = Number(r.GIANHAP) || 0;
         totalRev += sell;
         totalProf += (sell - buy);
-
-        if (r.SERI && !r.SERI.toString().toUpperCase().startsWith('PK')) {
-            countSeri++;
-        }
+        if (r.SERI && !r.SERI.toString().toUpperCase().startsWith('PK')) countSeri++;
     });
 
     qs('#totalRevenue').innerText = formatMoney(totalRev) + ' ₫';
     qs('#totalProfit').innerText = formatMoney(totalProf) + ' ₫';
     qs('#totalCount').innerText = filtered.length;
     qs('#totalSeriCount').innerText = countSeri;
-
     renderTable(filtered);
 }
 
 function renderTable(data) {
     const tbody = qs('#tableBody');
+    const mobileList = qs('#mobileList');
     tbody.innerHTML = '';
-    if(data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400 italic">Không có dữ liệu</td></tr>`; return; }
+    mobileList.innerHTML = '';
+
+    if(data.length === 0) { 
+        const emptyMsg = `<div class="p-8 text-center text-gray-400 italic">Không có dữ liệu</div>`;
+        tbody.innerHTML = `<tr><td colspan="7">${emptyMsg}</td></tr>`; 
+        mobileList.innerHTML = emptyMsg;
+        return; 
+    }
 
     data.forEach((row, i) => {
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-indigo-50 border-b border-gray-100 transition-colors group bg-white";
+        tr.className = "hover:bg-indigo-50 border-b border-gray-100 transition-colors group bg-white desktop-row";
+        
         let dateDisplay = formatDateForDisplay(row.DATE); 
         let productDetails = [row.DL, row.COLOR, row.SIM].filter(Boolean).join(' | ');
         let statusDetails = [row.TINHTRANG, row.PIN ? `Pin ${row.PIN}%` : ''].filter(Boolean).join(' - ');
 
-        const mobileView = `
-            <div class="md:hidden mt-2 space-y-1">
-                <div class="flex items-center gap-2 text-xs font-mono text-gray-500">
-                    <span class="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">${dateDisplay}</span>
-                    <span class="select-all text-indigo-600 font-bold">${row.SERI}</span>
-                </div>
-                <div class="text-sm font-bold text-gray-800">${row.NAME}</div>
-                <div class="flex flex-wrap gap-2 text-xs text-gray-600">
-                    ${productDetails ? `<span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">${productDetails}</span>` : ''}
-                </div>
-                <div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-100">
-                    <div class="font-bold text-red-600 font-mono">${formatMoney(row.GIABAN)}</div>
-                    <div class="text-xs text-gray-500">${row.SDTKHACH || 'Khách lẻ'}</div>
-                </div>
-                <div class="text-xs text-green-600 font-bold mt-1 text-right">BH: ${row.BAOHANH || '-'} <span class="text-blue-700 ml-1">(${row.BAOTEST || '-'})</span></div>
-            </div>
-        `;
-
-        // FIXED: Only pass ID to onclick to avoid special char issues (e.g. 12.9' M1)
         tr.innerHTML = `
             <td class="p-4 text-center text-gray-400 text-xs hidden md:table-cell">${i + 1}</td>
             <td class="p-4 align-top w-28 text-center font-mono text-gray-600 text-xs hidden md:table-cell">${dateDisplay}</td>
-            
             <td class="p-4 align-top whitespace-normal">
-                <div class="hidden md:block">
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="font-bold text-gray-800 text-sm">${row.NAME}</div>
-                        <div class="font-mono text-xs text-indigo-600 font-bold cursor-pointer select-all">${row.SERI}</div>
-                    </div>
-                    <div class="flex gap-2 text-xs text-gray-500">
-                         ${productDetails ? `<span class="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">${productDetails}</span>` : ''}
-                         ${statusDetails ? `<span class="bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-100">${statusDetails}</span>` : ''}
-                    </div>
-                    ${row.GHICHU ? `<div class="text-xs text-gray-400 italic mt-1 truncate max-w-[250px]"><i class="fa-regular fa-note-sticky mr-1"></i>${row.GHICHU}</div>` : ''}
+                <div class="flex items-center justify-between mb-1">
+                    <div class="font-bold text-gray-800 text-sm">${row.NAME}</div>
+                    <div class="font-mono text-xs text-indigo-600 font-bold cursor-pointer select-all">${row.SERI}</div>
                 </div>
-                ${mobileView}
+                <div class="flex gap-2 text-xs text-gray-500">
+                        ${productDetails ? `<span class="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">${productDetails}</span>` : ''}
+                        ${statusDetails ? `<span class="bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-100">${statusDetails}</span>` : ''}
+                </div>
+                ${row.GHICHU ? `<div class="text-xs text-gray-400 italic mt-1 truncate max-w-[250px]"><i class="fa-regular fa-note-sticky mr-1"></i>${row.GHICHU}</div>` : ''}
             </td>
-            
             <td class="p-4 align-top hidden md:table-cell">
                 <div class="font-bold text-gray-700 text-sm">${row.SDTKHACH || '-'}</div>
                 <div class="text-[10px] text-gray-400 mt-0.5 uppercase">Sale: ${row.SALE || '-'}</div>
             </td>
-            
             <td class="p-4 text-center hidden md:table-cell">
                 <div class="text-[10px] text-blue-700 font-bold mb-1">${row.BAOTEST || '-'}</div>
                 <div class="text-xs font-bold text-green-600">${row.BAOHANH || '-'}</div>
             </td>
-            
             <td class="p-4 text-right align-top hidden md:table-cell">
                 <div class="font-mono font-bold text-red-600">${formatMoney(row.GIABAN)}</div>
-                <div class="text-[10px] bg-indigo-50 text-indigo-700 inline-block px-1.5 py-0.5 rounded border border-indigo-100 mt-1 font-bold">${row.PTTT}</div>
+                <div class="text-[10px] bg-indigo-50 text-indigo-700 inline-block px-1.5 py-0.5 rounded border border-indigo-100 mt-1 font-bold truncate max-w-[120px]">${row.PTTT}</div>
             </td>
-
+            <!-- ĐÃ BỎ CỘT SALE -->
             <td class="p-4 text-center align-middle sticky right-0 z-10 bg-white group-hover:bg-indigo-50 shadow-left">
                 <button onclick="openActionMenu('${row.SERI}')" class="text-gray-400 hover:text-indigo-600 p-2 rounded-full hover:bg-indigo-100 transition"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>
             </td>
         `;
         tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 mobile-card relative";
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">${dateDisplay}</span>
+                    <span class="text-[10px] font-bold text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded bg-indigo-50 truncate max-w-[150px]">${row.PTTT}</span>
+                </div>
+                <button onclick="openActionMenu('${row.SERI}')" class="text-gray-400 p-1"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>
+            </div>
+            <div class="mb-3">
+                <div class="font-bold text-gray-800 text-base mb-1">${row.NAME}</div>
+                <div class="flex flex-wrap gap-2 text-xs text-gray-500 mb-1">
+                    ${productDetails ? `<span>${productDetails}</span>` : ''}
+                </div>
+                <div class="font-mono text-xs text-indigo-600 font-bold bg-indigo-50 px-2 py-1 rounded inline-block select-all">${row.SERI}</div>
+            </div>
+            <div class="flex justify-between items-end border-t border-gray-50 pt-2">
+                <div>
+                    <div class="text-xs font-bold text-gray-600">${row.SDTKHACH || 'Khách lẻ'}</div>
+                    <!-- ĐÃ BỎ DÒNG SALE -->
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-gray-400 mb-0.5">Thành tiền</div>
+                    <div class="font-mono font-bold text-red-600 text-lg">${formatMoney(row.GIABAN)}</div>
+                </div>
+            </div>
+        `;
+        mobileList.appendChild(card);
     });
 }
 
 // === ACTION SHEET LOGIC ===
 function openActionMenu(seri) {
-    // FIX: Retrieve item by seri to get name safely
     const item = allData.find(r => r.SERI == seri);
     const name = item ? item.NAME : '';
-    
     qs('#mas_title').innerText = name;
     qs('#mas_seri').value = seri;
-    const sheet = qs('#actionSheet');
-    sheet.classList.remove('hidden');
+    qs('#actionSheet').classList.remove('hidden');
     setTimeout(() => { qs('#mas_content').classList.remove('translate-y-full'); }, 10);
 }
 
@@ -806,10 +663,108 @@ function triggerAction(type) {
         if(type === 'copy') copyOrderReport(seri);
         if(type === 'print') printWarranty(seri);
         if(type === 'edit') openEdit(seri);
-        if(type === 'delete') deleteRow(seri);
+        // DELETE ĐÃ BỊ LOẠI BỎ
     }, 200);
 }
 
+// === NEW: GIFT LOGIC & MODALS ===
+async function openGiftSelect() {
+    qs('#giftModal').classList.remove('hidden'); 
+    setTimeout(() => { qs('#giftModal').classList.remove('modal-hide'); qs('#giftModal').classList.add('modal-open'); }, 10);
+    
+    // Only fetch if empty to save bandwidth
+    if(accData.length === 0) {
+        qs('#giftLoading').classList.remove('hidden');
+        accData = await fetchAccessories();
+        qs('#giftLoading').classList.add('hidden');
+    }
+    renderGiftList();
+}
+
+function closeGiftModal() {
+    qs('#giftModal').classList.remove('modal-open'); qs('#giftModal').classList.add('modal-hide');
+    setTimeout(() => qs('#giftModal').classList.add('hidden'), 200);
+}
+
+function renderGiftList() {
+    const k = qs('#giftSearch').value.toLowerCase();
+    const container = qs('#giftListBody');
+    container.innerHTML = '';
+
+    const filtered = accData.filter(i => i.NAME.toLowerCase().includes(k) || i.SKU.toLowerCase().includes(k));
+    
+    if(filtered.length === 0) {
+        container.innerHTML = '<div class="text-center p-4 text-gray-400">Không tìm thấy phụ kiện</div>';
+        return;
+    }
+
+    filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = "bg-white p-3 rounded shadow-sm border flex justify-between items-center";
+        // Create stock buttons
+        const btnCN1 = item.QTY_CN1 > 0 
+            ? `<button onclick="addGiftToOrder('${item.SKU}', 'CN1')" class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-bold hover:bg-blue-200">CN1 (${item.QTY_CN1})</button>`
+            : `<button class="bg-gray-100 text-gray-400 px-3 py-1 rounded text-xs font-bold cursor-not-allowed">CN1 (0)</button>`;
+            
+        const btnCN2 = item.QTY_CN2 > 0 
+            ? `<button onclick="addGiftToOrder('${item.SKU}', 'CN2')" class="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200">CN2 (${item.QTY_CN2})</button>`
+            : `<button class="bg-gray-100 text-gray-400 px-3 py-1 rounded text-xs font-bold cursor-not-allowed">CN2 (0)</button>`;
+
+        div.innerHTML = `
+            <div>
+                <div class="font-bold text-sm text-gray-800">${item.NAME}</div>
+                <div class="text-xs text-gray-500 font-mono">${item.SKU}</div>
+            </div>
+            <div class="flex gap-2">
+                ${btnCN1} ${btnCN2}
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function addGiftToOrder(sku, from) {
+    const item = accData.find(i => i.SKU === sku);
+    if(!item) return;
+    
+    // Add to selected list
+    selectedGifts.push({
+        SKU: sku,
+        NAME: item.NAME,
+        QTY: 1,
+        PRICE: 0, // Gift is 0
+        COST: item.COST,
+        FROM: from,
+        FROM_LABEL: from === 'CN1' ? 'CN 1' : 'CN 2'
+    });
+    
+    renderSelectedGifts();
+    closeGiftModal();
+}
+
+function renderSelectedGifts() {
+    const container = qs('#selected-gifts-container');
+    container.innerHTML = '';
+    
+    if(selectedGifts.length === 0) {
+        container.innerHTML = '(Chưa có quà tặng)';
+        return;
+    }
+
+    selectedGifts.forEach((g, idx) => {
+        const tag = document.createElement('span');
+        tag.className = 'gift-tag';
+        tag.innerHTML = `${g.NAME} (${g.FROM_LABEL}) <button onclick="removeGift(${idx})">&times;</button>`;
+        container.appendChild(tag);
+    });
+}
+
+function removeGift(idx) {
+    selectedGifts.splice(idx, 1);
+    renderSelectedGifts();
+}
+
+// === MAIN MODAL ACTIONS ===
 function openModal(mode) {
     qs('#modal').classList.remove('hidden'); 
     setTimeout(() => { qs('#modal').classList.remove('modal-hide'); qs('#modal').classList.add('modal-open'); }, 10);
@@ -819,11 +774,21 @@ function openModal(mode) {
         setVal('inp_seri', ''); setVal('inp_name', ''); setVal('inp_dl', '');
         setVal('inp_color', ''); setVal('inp_sim', ''); setVal('inp_tt', '');
         setVal('inp_pin', ''); setVal('inp_ghichu', ''); setVal('inp_giaban', ''); setVal('inp_gianhap', '');
-        setVal('inp_baotest', ''); setVal('inp_baohanh', ''); setVal('inp_sdt', ''); setVal('inp_pttt', 'CK');
-        qs('#cust_name_display').value = '';
+        setVal('inp_baotest', ''); setVal('inp_baohanh', ''); setVal('inp_sdt', ''); 
         
-        // Auto-fill Sale Name with Select
-        initSaleSelect(localStorage.getItem("NV_TEN"));
+        // Reset PTTT
+        isSplitPttt = false; togglePtttMode(); 
+        setVal('inp_pttt_simple', 'CK');
+        setVal('pttt_amount_1', ''); setVal('pttt_amount_2', '');
+        // Force reset UI state because toggle flips bool
+        isSplitPttt = true; togglePtttMode(); // Set to False visual state
+
+        qs('#cust_name_display').value = '';
+        setVal('inp_sale', 'SHOP');
+        
+        // Clear gifts for new order
+        selectedGifts = [];
+        renderSelectedGifts();
     }
 }
 
@@ -837,14 +802,48 @@ function openEdit(seri) {
     setVal('inp_pin', item.PIN); setVal('inp_ghichu', item.GHICHU);
     setVal('inp_giaban', formatMoney(item.GIABAN)); setVal('inp_gianhap', formatMoney(item.GIANHAP));
     setVal('inp_baotest', item.BAOTEST); setVal('inp_baohanh', item.BAOHANH);
-    // setVal('inp_sale', item.SALE); -> Removed
+    setVal('inp_sale', item.SALE || 'SHOP');
     setVal('inp_sdt', item.SDTKHACH ? item.SDTKHACH.replace(/'/g, '') : '');
-    setVal('inp_pttt', item.PTTT);
     
-    // Set Sale Select for Edit
-    initSaleSelect(item.SALE);
+    // PTTT Handling (Auto-detect split vs simple)
+    const pttt = item.PTTT || 'CK';
+    const standardPttt = ['CK', 'TM', 'GÓP', 'THẺ', 'NỢ'];
     
+    if (standardPttt.includes(pttt)) {
+        // Simple Mode
+        isSplitPttt = true; togglePtttMode(); 
+        setVal('inp_pttt_simple', pttt);
+        setVal('pttt_amount_1', ''); setVal('pttt_amount_2', '');
+    } else {
+        // Complex Mode (Split) -> Try to parse "TM 500000 + CK 1000000"
+        isSplitPttt = false; togglePtttMode(); 
+        
+        // Regex to parse: Method1 Amount1 + Method2 Amount2
+        // Handles "TM 500.000 + CK 1.000.000" or raw numbers
+        const parts = pttt.split('+').map(p => p.trim());
+        if(parts.length >= 2) {
+            const p1 = parts[0].split(' ');
+            const p2 = parts[1].split(' ');
+            
+            // Set First Part
+            setVal('pttt_method_1', p1[0] || 'TM');
+            setVal('pttt_amount_1', p1[1] || '');
+            
+            // Set Second Part
+            setVal('pttt_method_2', p2[0] || 'CK');
+            setVal('pttt_amount_2', p2[1] || '');
+        } else {
+            // Fallback if parsing fails but not standard
+            setVal('pttt_amount_1', ''); setVal('pttt_amount_2', '');
+        }
+    }
+
     lookupCustomer();
+    
+    // NOTE: When editing, we do not restore gift list to avoid double deduction logic complexity
+    // Just start with empty gift list (user can add more if needed)
+    selectedGifts = [];
+    renderSelectedGifts();
 }
 
 function closeModal() { 
@@ -852,41 +851,101 @@ function closeModal() {
     setTimeout(() => qs('#modal').classList.add('hidden'), 200);
 }
 
+// === SAVE DATA LOGIC (Modified to deduct stock & calculate profit) ===
 async function saveData() {
     const btn = qs('#btnSave');
     const seri = getVal('inp_seri').trim();
     const sdtRaw = getVal('inp_sdt').trim();
     if(!seri || !sdtRaw) return alert("Vui lòng nhập Seri và SĐT!");
     
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...'; btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...'; btn.disabled = true;
+
+    // 1. Prepare Note & Cost Logic
+    let note = getVal('inp_ghichu');
+    let totalGiftCost = 0; // Initialize cost accumulator
+
+    if(selectedGifts.length > 0) {
+        // Map names and sum cost
+        const giftNames = selectedGifts.map(g => {
+            totalGiftCost += Number(g.COST || 0); // Accumulate Cost
+            return g.NAME;
+        }).join(', ');
+        
+        // Append gift info to note
+        // We clean old tag if exists then append new
+        note = note.replace(/\[Tặng: .*?\]/g, "").trim();
+        note = `${note} [Tặng: ${giftNames}]`.trim();
+    }
+    
+    // Calculate Final Import Price (Machine Cost + Gifts Cost)
+    const currentImportPrice = Number(getVal('inp_gianhap').replace(/\./g, '')) || 0;
+    const finalImportPrice = currentImportPrice + totalGiftCost;
+
+    // Get PTTT Value using Helper
+    const finalPttt = getPtttValue();
 
     const item = {
         DATE: getVal('inp_date'), SERI: seri, NAME: getVal('inp_name'), DL: getVal('inp_dl'),
         COLOR: getVal('inp_color'), SIM: getVal('inp_sim'), TINHTRANG: getVal('inp_tt'), PIN: getVal('inp_pin'),
-        GHICHU: getVal('inp_ghichu'), GIABAN: getVal('inp_giaban').replace(/\./g, ''), GIANHAP: getVal('inp_gianhap').replace(/\./g, ''),
+        GHICHU: note, 
+        GIABAN: getVal('inp_giaban').replace(/\./g, ''), 
+        GIANHAP: finalImportPrice, // Use updated import price
         BAOTEST: getVal('inp_baotest'), BAOHANH: getVal('inp_baohanh'), SALE: getVal('inp_sale'),
-        SDTKHACH: sdtRaw, PTTT: getVal('inp_pttt')
+        SDTKHACH: sdtRaw, 
+        PTTT: finalPttt // Use new value
     };
 
     const body = { action: isEditing ? 'edit' : 'add', ...item, SDTKHACH: "'" + sdtRaw };
     if(isEditing) body.SERI_KEY = getVal('seri_key');
 
     try {
+        // STEP 1: Save Machine Order
         const res = await fetchData(body);
+        
         if(res && res.success) {
+            
+            // STEP 2: Deduct Gifts from Accessory Inventory (If gifts exist & NOT editing)
+            // Warning: We generally only deduct on NEW orders to prevent double deduction on edits.
+            if(selectedGifts.length > 0 && !isEditing) {
+                try {
+                     const accBody = {
+                        action: 'sell_multi_acc',
+                        items: selectedGifts,
+                        customer: {
+                            PHONE: sdtRaw,
+                            NAME: qs('#cust_name_display').value || 'Khách mua máy',
+                            SALE: getVal('inp_sale'),
+                            BAOTEST: '', BAOHANH: '', PTTT: 'GIFT',
+                            DATE: getVal('inp_date'),
+                            NOTE: `Tặng kèm theo máy ${seri}`
+                        }
+                    };
+                    
+                    // Call Accessory API
+                    // No await needed here if we want UI to return fast, but safer to log
+                    fetch(API_ACC_URL, {
+                        method: 'POST',
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(accBody)
+                    }).then(r => console.log("Sent gift deduction request"));
+                    
+                } catch(err) {
+                    console.error("Lỗi trừ kho quà: " + err.message);
+                }
+            }
+
             closeModal();
             loadData();
             if(!isEditing) printWarranty(seri);
+            
         } else alert("Lỗi: " + (res ? res.message : 'Kết nối thất bại'));
     } catch(e) { alert("Lỗi: " + e.message); }
     finally { btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Đơn Hàng'; btn.disabled = false; }
 }
 
-async function deleteRow(seri) {
-    if(!confirm("Xóa hồ sơ: " + seri + "?")) return;
-    const res = await fetchData({ action: 'delete', SERI: seri });
-    if(res && res.success) loadData();
-    else alert("Lỗi xóa: " + (res ? res.message : ''));
+function initSaleSelect(targetValue) {
+    const sel = qs('#inp_sale');
+    sel.value = localStorage.getItem("NV_TEN") || "SHOP";
 }
 
 async function printWarranty(seri) {
@@ -902,10 +961,16 @@ async function printWarranty(seri) {
     setVal('print_prodIMEI', row.SERI);
     setVal('print_prodCond', `${row.TINHTRANG || ''} ${row.PIN ? '- Pin '+row.PIN+'%' : ''}`.trim());
     setVal('print_custPhone', row.SDTKHACH ? row.SDTKHACH.replace(/'/g, '') : '');
-    
-    // UPDATED MAPPING
     setVal('print_baotest', row.BAOTEST || '');
     setVal('print_warRepair', row.BAOHANH || '');
+
+    // Extract Gift from Note
+    let giftPrint = "";
+    if (row.GHICHU && row.GHICHU.includes("[Tặng:")) {
+        const match = row.GHICHU.match(/\[Tặng: (.*?)\]/);
+        if(match) giftPrint = match[1];
+    }
+    setVal('print_gift', giftPrint);
 
     if(row.SDTKHACH) {
         const res = await fetchData({ action: 'lookup_customer', SDT: row.SDTKHACH.replace(/'/g, '') });
@@ -944,25 +1009,16 @@ function updatePrintPreview() {
     setTxt('prev_page2IMEI', getTxt('print_prodIMEI'));
     setTxt('prev_prodAcc', getTxt('print_prodAcc'));
     setTxt('prev_prodCond', getTxt('print_prodCond'));
-    
     setTxt('prev_baotest', getTxt('print_baotest'));
     setTxt('prev_warRepair', getTxt('print_warRepair'));
-    
     setTxt('prev_warBattery', getTxt('print_warBattery'));
     setTxt('prev_gift', getTxt('print_gift'));
     setTxt('prev_notes', getTxt('print_notes'));
 
-    setCheck('chk_lung', 'v_lung');
-    setCheck('chk_suon', 'v_suon');
-    setCheck('chk_epkinh', 'v_epkinh');
-    setCheck('chk_manzin', 'v_manzin');
-    setCheck('chk_manlk', 'v_manlk');
-    setCheck('chk_pinzin', 'v_pinzin');
-    setCheck('chk_pinchu', 'v_pinchu');
-    setCheck('chk_pincao', 'v_pincao');
-    setCheck('chk_camtr', 'v_camtr');
-    setCheck('chk_camsau', 'v_camsau');
-    setCheck('chk_main', 'v_main');
+    setCheck('chk_lung', 'v_lung'); setCheck('chk_suon', 'v_suon'); setCheck('chk_epkinh', 'v_epkinh');
+    setCheck('chk_manzin', 'v_manzin'); setCheck('chk_manlk', 'v_manlk'); setCheck('chk_pinzin', 'v_pinzin');
+    setCheck('chk_pinchu', 'v_pinchu'); setCheck('chk_pincao', 'v_pincao'); setCheck('chk_camtr', 'v_camtr');
+    setCheck('chk_camsau', 'v_camsau'); setCheck('chk_main', 'v_main');
     
     const cloudEl = document.getElementById('v_cloud');
     if(document.getElementById('chk_cloud').checked) {
@@ -972,45 +1028,26 @@ function updatePrintPreview() {
     }
 }
 
-// --- NEW FUNCTION: Auto Scale Print Preview ---
 function autoScalePrintPreview() {
     const wrapper = qs('#preview-wrapper');
     const container = qs('#print-preview');
     if (!wrapper || !container) return;
-
-    // Chỉ scale nếu màn hình nhỏ (Mobile)
     if (window.innerWidth < 768) {
-        // Chiều rộng gốc của A4 (210mm) xấp xỉ 800px trong CSS
-        const originalWidth = 800; 
-        // Trừ padding của container (32px = p-4 * 2)
-        const availableWidth = container.offsetWidth - 32; 
-        
-        const scale = availableWidth / originalWidth;
-        // Giới hạn scale tối đa là 1
-        const finalScale = Math.min(scale, 1);
-        
-        wrapper.style.transform = `scale(${finalScale})`;
-        wrapper.style.transformOrigin = 'top center'; // Hoặc 'top left' tùy sở thích
-        
-        // Điều chỉnh chiều cao của container cha để không bị khoảng trắng thừa quá nhiều
-        // (Optional: Nếu cần thiết)
-    } else {
-        wrapper.style.transform = 'none';
-    }
+        const originalWidth = 800; const availableWidth = container.offsetWidth - 32; 
+        const scale = Math.min(availableWidth / originalWidth, 1);
+        wrapper.style.transform = `scale(${scale})`;
+        wrapper.style.transformOrigin = 'top center'; 
+    } else { wrapper.style.transform = 'none'; }
 }
 
 async function copyOrderReport(seri) {
     const row = allData.find(r => r.SERI === seri);
     if (!row) return;
 
-    let custName = "Khách hàng", custAddr = "", custCCCD = "";
+    let custName = "Khách hàng";
     if (row.SDTKHACH) {
         const res = await fetchData({ action: 'lookup_customer', SDT: row.SDTKHACH.replace(/'/g, '') });
-        if (res && res.success) {
-            custName = res.data.TEN || custName;
-            custAddr = res.data.DIACHI || "";
-            custCCCD = res.data.CCCD ? res.data.CCCD.replace(/'/g, '') : "";
-        }
+        if (res && res.success) custName = res.data.TEN || custName;
     }
 
     const today = new Date();
@@ -1031,17 +1068,13 @@ function switchPrintTab(tabName) {
         editor.classList.add('hidden'); preview.classList.remove('hidden'); preview.classList.add('flex');
         bE.className = "flex-1 py-3 text-sm text-gray-500 font-medium hover:bg-gray-100";
         bP.className = "flex-1 py-3 text-sm font-bold text-indigo-700 border-b-2 border-indigo-700 bg-white";
-        
-        // Trigger auto scale immediately after showing
         setTimeout(autoScalePrintPreview, 50);
     }
 }
 
 function closePrintModal() { qs('#printModal').classList.add('hidden'); qs('#printModal').classList.remove('flex'); }
 
-// Listen for resize
 window.addEventListener('resize', autoScalePrintPreview);
-
 loadData();
 </script>
 </body>
